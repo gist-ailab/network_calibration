@@ -5,7 +5,7 @@ from torch.nn import functional as F
 from .common import _ECELoss, evaluate
 
 
-class VectorScalingEvaluater(nn.Module):
+class MatrixScalingEvaluater(nn.Module):
     """
     A thin decorator, which wraps a model with temperature scaling
     model (nn.Module):
@@ -14,30 +14,31 @@ class VectorScalingEvaluater(nn.Module):
             NOT the softmax (or log softmax)!
     """
     def __init__(self, **kwargs):
-        super(VectorScalingEvaluater, self).__init__()
+        super(MatrixScalingEvaluater, self).__init__()
         self.train_loader = kwargs['train_loader']
         self.valid_loader = kwargs['valid_loader']
         self.test_loader = kwargs['test_loader']
 
         self.model = kwargs['model']
 
-        self.vector = nn.Parameter(torch.ones(kwargs['num_classes']) * 1.5)
+        self.matrix = nn.Parameter(torch.ones(kwargs['num_classes'], kwargs['num_classes']) * 1.5)
         self.device = kwargs['device']
 
     def forward(self, input):
         logits = self.model(input)
-        return self.vector_scale(logits)
+        return self.matrix_scale(logits)
 
-    def vector_scale(self, logits):
+    def matrix_scale(self, logits):
         """
         Perform temperature scaling on logits
         """
         # Expand temperature to match the size of logits
-        vector = self.vector.unsqueeze(0)
-        return logits * vector
+        matrix = self.matrix
+
+        return torch.mm(logits, matrix)
 
     # This function probably should live outside of this class, but whatever
-    def set_vector(self, valid_loader):
+    def set_matrix(self, valid_loader):
         """
         Tune the tempearature of the model (using the validation set).
         We're going to set it to optimize NLL.
@@ -67,19 +68,19 @@ class VectorScalingEvaluater(nn.Module):
         print('Before temperature - NLL: %.3f, ECE: %.3f' % (before_temperature_nll, before_temperature_ece))
 
         # Next: optimize the temperature w.r.t. NLL
-        optimizer = optim.LBFGS([self.vector], lr=0.001, max_iter=5000)
+        optimizer = optim.LBFGS([self.matrix], lr=0.001, max_iter=5000)
 
         def eval():
             optimizer.zero_grad()
-            loss = nll_criterion(self.vector_scale(logits), labels)
+            loss = nll_criterion(self.matrix_scale(logits), labels)
             loss.backward()
             return loss
         optimizer.step(eval)
 
         # Calculate NLL and ECE after temperature scaling
-        after_temperature_nll = nll_criterion(self.vector_scale(logits), labels).item()
-        after_temperature_ece = ece_criterion(self.vector_scale(logits), labels).item()
-        print('Optimal vector:', self.vector.cpu().detach().numpy())
+        after_temperature_nll = nll_criterion(self.matrix_scale(logits), labels).item()
+        after_temperature_ece = ece_criterion(self.matrix_scale(logits), labels).item()
+        print('Optimal vector:', self.matrix.cpu().detach().numpy())
 
         print('After temperature - NLL: %.3f, ECE: %.3f' % (after_temperature_nll, after_temperature_ece))
 
@@ -88,7 +89,7 @@ class VectorScalingEvaluater(nn.Module):
 
     def eval(self):
         self.model.eval()
-        self.set_vector(self.valid_loader)
+        self.set_matrix(self.valid_loader)
 
         outputs = []
         targets = []

@@ -10,6 +10,7 @@ from scipy import io
 from torchvision import transforms
 from torchvision import datasets as dset
 from skimage.filters import gaussian as gblur
+from sklearn.model_selection import train_test_split
 import torchvision
 
 
@@ -56,6 +57,21 @@ def get_cifar(dataset, folder, batch_size):
     valid_loader = torch.utils.data.DataLoader(test_data, batch_size, shuffle=False, pin_memory=True, num_workers = 4)
     
     return train_loader, valid_loader
+
+def devide_val_test(valid_loader, divide_rate = 0.1, seed = 0):
+    np.random.seed(0)
+    dataset = valid_loader.dataset
+
+    indices = list(range(len(dataset)))
+    val_indices, test_indices = train_test_split(indices, test_size=divide_rate, stratify=dataset.targets) 
+
+    val_dataset = torch.utils.data.Subset(dataset, val_indices)
+    test_dataset = torch.utils.data.Subset(dataset, test_indices)
+
+    val_loader = torch.utils.data.DataLoader(val_dataset, shuffle=False, num_workers=2, batch_size=100)
+    test_loader = torch.utils.data.DataLoader(test_dataset, shuffle=False, num_workers=2, batch_size=100)
+    return val_loader, test_loader
+
 
 def get_train_svhn(folder, batch_size):
     train_data = dset.SVHN(folder, split='train', transform=test_transform_cifar, download=True)    

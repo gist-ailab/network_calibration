@@ -7,15 +7,18 @@ import numpy as np
 
 import utils
 import prehoc
+import posthoc
 
 # torch.manual_seed(0)
 
-trainers = {
-    'ce': prehoc.CETrainer,
-    'focal': prehoc.FocalTrainer,
-    'oe': prehoc.OETrainer,
-    'oecc': prehoc.OECCTrainer,
-    'mixup': prehoc.MixupTrainer
+evaluaters = {
+    'baseline': posthoc.BaselineEvaluater,
+    'temperature': posthoc.TemperatureEvaluater,
+    'vector': posthoc.VectorScalingEvaluater,
+    'matrix': posthoc.MatrixScalingEvaluater,
+    'spline': posthoc.SplineEvaluater,
+    'norm': posthoc.NormEvaluater
+
 }
 
 
@@ -26,15 +29,12 @@ def train():
     parser.add_argument('--save_path', '-s', type=str)
 
     parser.add_argument('--inlier-data', '-i', type=str)
-    parser.add_argument('--outlier-data', '-o', type=str)
-    parser.add_argument('--method', '-m', type=str, choices=['ce', 'focal', 'soft', 'mixup', 'oe', 'oecc'])
+    parser.add_argument('--method', '-m', type=str, choices=['baseline', 'temperature', 'vector', 'matrix', 'spline', 'norm'])
 
     args = parser.parse_args()
 
     config = utils.read_conf('conf/'+args.inlier_data+'.json')
-
-    os.environ['CUDA_VISIBLE_DEVICES']=args.gpu
-    device = 'cuda:0'#+args.gpu
+    device = 'cuda:'+args.gpu
 
     model_name = args.net
     dataset_path = config['id_dataset']
@@ -44,18 +44,8 @@ def train():
 
     if args.net == 'resnet18':
         batch_size = int(config['batch_size'])
-        max_epoch = int(config['epoch'])
-        wd = 5e-04
-        lrde = [50, 75, 90]
         
     print(model_name, dataset_path.split('/')[-2], batch_size, class_range)
-    
-    if not os.path.exists(config['save_path']):
-        os.mkdir(config['save_path'])
-    if not os.path.exists(save_path):
-        os.mkdir(save_path)
-    else:
-        raise ValueError('save_path already exists')
     
     with open('{}/{}'.format(save_path, 'args.txt'), 'w') as f:
         for a in vars(args):
@@ -63,53 +53,31 @@ def train():
 
     if 'cifar' in args.inlier_data:
         train_loader, valid_loader = utils.get_cifar(args.inlier_data, dataset_path, batch_size)
+        valid_loader, test_loader = utils.devide_val_test(valid_loader, 0.1)
+
 
     if 'resnet18' in args.net:
         model = timm.create_model(args.net, pretrained=False, num_classes=num_classes)
         model.conv1 = torch.nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
         model.maxpool = torch.nn.MaxPool2d(kernel_size=1, stride=1, padding=0)
+    model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
     model.to(device)
     
-    optimizer = torch.optim.SGD(model.parameters(), lr = 0.1, momentum=0.9, weight_decay = wd)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, lrde)
-    saver = timm.utils.CheckpointSaver(model, optimizer, checkpoint_dir= save_path, max_history = 2)    
 
-    if not args.outlier_data is None:
-        out_loader = utils.get_out(args.outlier_data)
-    else:
-        out_loader = None 
-
-    if args.method == 'mixup':
-        out_loader, _ = utils.get_cifar(args.inlier_data, dataset_path, batch_size)
-    A_tr = { # for OECC
-        'cifar10':0.9432,
-        'cifar100':0.7644,
-        'svhn': 0.9500
-    }
-    A_tr = A_tr[args.inlier_data]
-
-
-    trainer = trainers[args.method](
+    evaluater = evaluaters[args.method](
         model = model,
         train_loader = train_loader, 
         valid_loader = valid_loader,
-        out_loader = out_loader,
+        test_loader = test_loader,
         
-        optimizer = optimizer,
-        scheduler = scheduler,
-        saver = saver,
         device = device,
-
         num_classes = num_classes,
-        A_tr = A_tr
+        ndim = 512
         )
     
-    for epoch in range(max_epoch):
-        ## training
-        trainer.train()
+    ## evaluation
+    evaluater.eval()
 
-        ## validation
-        trainer.validation(epoch)
 
 if __name__ =='__main__':
     train()
