@@ -1,0 +1,7 @@
+{
+    "epoch" : "100",
+    "id_dataset" : "/SSDe/yyg/CUB200_",
+    "batch_size" : 32,
+    "save_path" : "/SSDd/yyg/Birds/",
+    "num_classes" : 200
+}

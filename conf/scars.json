@@ -1,0 +1,7 @@
+{
+    "epoch" : "100",
+    "id_dataset" : "/SSDe/yyg/Stanford-Cars",
+    "batch_size" : 32,
+    "save_path" : "/SSDd/yyg/Cars/",
+    "num_classes" : 196
+}

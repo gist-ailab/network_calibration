@@ -1,0 +1,7 @@
+{
+    "epoch" : "100",
+    "id_dataset" : "/SSDe/yyg/FGVC-Aircraft",
+    "batch_size" : 32,
+    "save_path" : "/SSDd/yyg/Aircrafts/",
+    "num_classes" : 100
+}

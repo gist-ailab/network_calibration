@@ -4,3 +4,5 @@ from .vector_scaling import VectorScalingEvaluater
 from .matrix_scaling import MatrixScalingEvaluater
 from .splines import SplineEvaluater
 from .norm_aware_scaling import NormEvaluater
+from .norm_aware_vector_scaling import VectorNormEvaluater
+from .norm_aware_scaling_only import OnlyNormEvaluater

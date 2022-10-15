@@ -1,0 +1,7 @@
+{
+    "epoch" : "100",
+    "id_dataset" : "/SSDd/yyg/data/dataverse_files",
+    "batch_size" : 64,
+    "save_path" : "/SSDd/yyg/HAM10000/",
+    "num_classes" : 7
+}

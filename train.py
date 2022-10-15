@@ -42,11 +42,10 @@ def train():
     num_classes = int(config['num_classes'])
     class_range = list(range(0, num_classes))
 
-    if args.net == 'resnet18':
-        batch_size = int(config['batch_size'])
-        max_epoch = int(config['epoch'])
-        wd = 5e-04
-        lrde = [50, 75, 90]
+    batch_size = int(config['batch_size'])
+    max_epoch = int(config['epoch'])
+    wd = 5e-04
+    lrde = [50, 75, 90]
         
     print(model_name, dataset_path.split('/')[-2], batch_size, class_range)
     
@@ -63,14 +62,26 @@ def train():
 
     if 'cifar' in args.inlier_data:
         train_loader, valid_loader = utils.get_cifar(args.inlier_data, dataset_path, batch_size)
+    elif 'svhn' in args.inlier_data:
+        train_loader, valid_loader = utils.get_train_svhn(dataset_path, batch_size)
+    elif 'ham10000' in args.inlier_data:
+        train_loader, valid_loader = utils.get_imagenet('ham10000', dataset_path, batch_size)
+    else:
+        train_loader, valid_loader = utils.get_imagenet(args.inlier_data, dataset_path, batch_size)
 
     if 'resnet18' in args.net:
         model = timm.create_model(args.net, pretrained=False, num_classes=num_classes)
         model.conv1 = torch.nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
         model.maxpool = torch.nn.MaxPool2d(kernel_size=1, stride=1, padding=0)
+        optimizer = torch.optim.SGD(model.parameters(), lr = 0.1, momentum=0.9, weight_decay = wd)
+
+    else:
+        model = timm.create_model(args.net, pretrained=True, num_classes=num_classes)
+        optimizer = torch.optim.SGD(model.parameters(), lr = 0.1, momentum=0.9, weight_decay = wd)
+        wd = 5e-04
+        lrde = [30, 60, 90]
     model.to(device)
     
-    optimizer = torch.optim.SGD(model.parameters(), lr = 0.1, momentum=0.9, weight_decay = wd)
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, lrde)
     saver = timm.utils.CheckpointSaver(model, optimizer, checkpoint_dir= save_path, max_history = 2)    
 
@@ -84,7 +95,9 @@ def train():
     A_tr = { # for OECC
         'cifar10':0.9432,
         'cifar100':0.7644,
-        'svhn': 0.9500
+        'svhn': 0.9500,
+        'aircraft':0.76,
+        'cub':0.8
     }
     A_tr = A_tr[args.inlier_data]
 

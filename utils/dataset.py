@@ -25,16 +25,16 @@ train_transforms = transforms.Compose([
     transforms.RandomHorizontalFlip(),
     transforms.RandomCrop((224,224)),
     transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                        std= [0.229, 0.224, 0.225]) 
+    # transforms.Normalize(mean=[0.485, 0.456, 0.406],
+    #                     std= [0.229, 0.224, 0.225]) 
 ])
 
 test_transforms = transforms.Compose([
     transforms.Resize((256,256)),
     transforms.CenterCrop((224,224)),
     transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                        std= [0.229, 0.224, 0.225]) 
+    # transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                        # std= [0.229, 0.224, 0.225]) 
 ])
 def read_conf(json_path):
     """
@@ -62,8 +62,14 @@ def devide_val_test(valid_loader, divide_rate = 0.1, seed = 0):
     np.random.seed(0)
     dataset = valid_loader.dataset
 
+    if not hasattr(dataset, 'targets'):
+        targets = []
+        for data in dataset:
+            targets.append(data[1])
+    else:
+        targets = dataset.targets
     indices = list(range(len(dataset)))
-    val_indices, test_indices = train_test_split(indices, test_size=divide_rate, stratify=dataset.targets) 
+    val_indices, test_indices = train_test_split(indices, test_size=divide_rate, stratify=targets) 
 
     val_dataset = torch.utils.data.Subset(dataset, val_indices)
     test_dataset = torch.utils.data.Subset(dataset, test_indices)
