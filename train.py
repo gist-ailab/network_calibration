@@ -78,7 +78,7 @@ def train():
     else:
         model = timm.create_model(args.net, pretrained=True, num_classes=num_classes)
         optimizer = torch.optim.SGD(model.parameters(), lr = 0.1, momentum=0.9, weight_decay = wd)
-        wd = 5e-04
+        wd = 1e-04
         lrde = [30, 60, 90]
     model.to(device)
     
@@ -97,7 +97,8 @@ def train():
         'cifar100':0.7644,
         'svhn': 0.9500,
         'aircraft':0.76,
-        'cub':0.8
+        'cub':0.8,
+        'scars':0.8
     }
     A_tr = A_tr[args.inlier_data]
 

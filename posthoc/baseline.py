@@ -8,6 +8,7 @@ class BaselineEvaluater():
     def __init__(self, **kwargs):
         self.train_loader = kwargs['train_loader']
         self.valid_loader = kwargs['valid_loader']
+        self.test_loader = kwargs['test_loader']
 
         self.model =  kwargs['model']
         self.device =  kwargs['device']
@@ -18,7 +19,7 @@ class BaselineEvaluater():
         outputs = []
         targets = []
         with torch.no_grad():
-            for batch_idx, (inputs, target) in enumerate(self.valid_loader):
+            for batch_idx, (inputs, target) in enumerate(self.test_loader):
                 inputs, target = inputs.to(self.device), target.to(self.device)
                 output = self.model(inputs)
                 output = torch.softmax(output, dim=1)

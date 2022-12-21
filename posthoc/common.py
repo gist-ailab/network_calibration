@@ -125,12 +125,37 @@ def ECE(conf, pred, true, bin_size = 0.1):
     ece = 0  # Starting error
     
     for conf_thresh in upper_bounds:  # Go through bounds and find accuracies and confidences
-        acc, avg_conf, len_bin = compute_acc_bin(conf_thresh-bin_size, conf_thresh, conf, pred, true)        
+        acc, avg_conf, len_bin = compute_acc_bin(conf_thresh-bin_size, conf_thresh, conf, pred, true)  
         ece += np.abs(acc-avg_conf)*len_bin/n  # Add weigthed difference to ECE
         
     return ece
         
-      
+def OE(conf, pred, true, bin_size = 0.1):
+    
+    """
+    Expected Calibration Error
+    
+    Args:
+        conf (numpy.ndarray): list of confidences
+        pred (numpy.ndarray): list of predictions
+        true (numpy.ndarray): list of true labels
+        bin_size: (float): size of one bin (0,1)  # TODO should convert to number of bins?
+        
+    Returns:
+        ece: expected calibration error
+    """
+    
+    upper_bounds = np.arange(bin_size, 1+bin_size, bin_size)  # Get bounds of bins
+    
+    n = len(conf)
+    ece = 0  # Starting error
+    
+    for conf_thresh in upper_bounds:  # Go through bounds and find accuracies and confidences
+        acc, avg_conf, len_bin = compute_acc_bin(conf_thresh-bin_size, conf_thresh, conf, pred, true)  
+        ece += avg_conf * np.max(avg_conf-acc, 0)*len_bin/n  # Add weigthed difference to ECE
+        
+    return ece
+
 def MCE(conf, pred, true, bin_size = 0.1):
 
     """
@@ -151,8 +176,9 @@ def MCE(conf, pred, true, bin_size = 0.1):
     cal_errors = []
     
     for conf_thresh in upper_bounds:
-        acc, avg_conf, _ = compute_acc_bin(conf_thresh-bin_size, conf_thresh, conf, pred, true)
-        cal_errors.append(np.abs(acc-avg_conf))
+        acc, avg_conf, len_bin = compute_acc_bin(conf_thresh-bin_size, conf_thresh, conf, pred, true)
+        if len_bin>5:
+            cal_errors.append(np.abs(acc-avg_conf))
         
     return max(cal_errors)
 
@@ -189,7 +215,8 @@ def evaluate(probs, y_true, verbose = False, normalize = False, bins = 15, is_sp
     ece = ECE(confs, preds, y_true, bin_size = 1/bins)
     # Calculate MCE
     mce = MCE(confs, preds, y_true, bin_size = 1/bins)
-    
+
+    oe = OE(confs, preds, y_true, bin_size = 1/bins)
     if is_spline:
         loss = log_loss(y_true=y_true, y_pred=probs[0])
         y_prob_true = np.array([probs[0][i, idx] for i, idx in enumerate(y_true)])  # Probability of positive class
@@ -207,6 +234,7 @@ def evaluate(probs, y_true, verbose = False, normalize = False, bins = 15, is_sp
         print("Error:", error)
         print("ECE:", ece)
         print("MCE:", mce)
+        print("OE:", oe)
         print("Loss:", loss)
         # print("brier:", brier)
     
