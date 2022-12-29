@@ -30,7 +30,7 @@ class VGG(nn.Module):
             if isinstance(m, nn.Conv2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
                 m.weight.data.normal_(0, math.sqrt(2. / n))
-                # m.bias.data.zero_() # for bias
+                m.bias.data.zero_() # for bias
 
     def forward(self, x):
         out = self.forward_features(x)
@@ -54,9 +54,17 @@ class VGG(nn.Module):
         layers += [nn.AvgPool2d(kernel_size=1, stride=1)]
         return nn.Sequential(*layers)
 
+    def forward_features_norm(self, x):
+        features = []
+        for layer in self.features:
+            out = layer(out)
+            
+            features.append(out)
+
+        return out, features
 
 def test():
-    net = VGG('VGG11')
+    net = VGG('VGG11', 10)
     x = torch.randn(2,3,32,32)
     y = net(x)
     print(y.size())

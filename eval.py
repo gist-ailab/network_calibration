@@ -68,19 +68,20 @@ def train():
     print(len(valid_loader), len(test_loader))
 
     if 'resnet18' in args.net:
-        model = timm.create_model(args.net, pretrained=False, num_classes=num_classes)
-        model.conv1 = torch.nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
-        model.maxpool = torch.nn.MaxPool2d(kernel_size=1, stride=1, padding=0)
+        model = utils.ResNet18(num_classes = num_classes, norm_layer = -2)
+        # model = utils.ResNet18(num_classes = num_classes)
         model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
     elif 'wrn28' in args.net:
-        model = utils.WideResNet(28, num_classes, widen_factor=10, norm_layer=-2)
+        model = utils.WideResNet(28, num_classes, widen_factor=10, norm_layer=-3)
         # model = utils.WideResNet(28, num_classes, widen_factor=10)
-
         model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
     elif 'vgg11' == args.net:       
         model = utils.VGG('VGG11', num_classes)
         model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
-        
+    elif 'wrn40' in args.net:
+        model = utils.WideResNet(40, num_classes, widen_factor=2, norm_layer=-2)
+        # model = utils.WideResNet(40, num_classes, widen_factor=2)
+        model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
     else:
         model = timm.create_model(args.net, pretrained=False, num_classes=num_classes)
         if args.inlier_data == 'imagenet':
@@ -113,6 +114,7 @@ def train():
         else:
             model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
     model.to(device)
+    model.set_gamma(train_loader, device, -2)
     
     evaluater = evaluaters[args.method](
         model = model,

@@ -18,12 +18,15 @@ def forward_norm(model, loader, device):
     model.eval()
 
     ratios = []
+    lambda_ratios = []
 
+    features_norm = []
     upsampler = torch.nn.Upsample(size=[32,32])
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(loader):
             inputs, targets = inputs.to(device), targets.to(device)
             features = model.forward_features(inputs)
+
             features = features.mean(dim=1)
             # obtain attention map
             attn_map = torch.ones_like(features.view(-1, features.size(1)*features.size(2)))
@@ -38,21 +41,38 @@ def forward_norm(model, loader, device):
 
             corrputed_inputs = inputs * upsampled_attn_map
 
-            _, clean_features = model.forward_features_norm(inputs)
+            last_feat_clean, clean_features = model.forward_features_norm(inputs)
             _, corrupted_features = model.forward_features_norm(corrputed_inputs)
+            last_feat_clean = F.avg_pool2d(last_feat_clean, 4)
+            last_feat_clean = last_feat_clean.view(last_feat_clean.size(0), -1)
+
+            last_norm = torch.norm(last_feat_clean, p=2, dim=1)
 
             for i in range(len(clean_features)):
                 # norm_clean = torch.norm(clean_features[i], p=2, dim=[2,3])
                 # norm_corrupt = torch.norm(corrupted_features[i], p=2, dim=[2,3])
                 x = clean_features[i]
-                norm_clean = torch.where(torch.sum(torch.where(x>0, (x*x), -(x*x)), dim=[2,3]) < 0, -torch.abs(torch.sum(torch.where(x>0, (x*x), -(x*x)), dim=[2,3])).sqrt(), torch.sum(torch.where(x>0, (x*x), -(x*x)), dim=[2,3]).sqrt())
+                norm_clean = torch.norm(x, p=2, dim=[2, 3]).mean(1)#.view(-1, 1)
+                # norm_clean = torch.norm(x, dim=[2,3], p=2)
+                # norm_clean = torch.where(torch.sum(torch.where(x>0, (x*x), -(x*x)), dim=[2,3]) < 0, -torch.abs(torch.sum(torch.where(x>0, (x*x), -(x*x)), dim=[2,3])).sqrt(), torch.sum(torch.where(x>0, (x*x), -(x*x)), dim=[2,3]).sqrt())
+                # norm_clean = torch.norm
                 x = corrupted_features[i]
-                norm_corrupt = torch.where(torch.sum(torch.where(x>0, (x*x), -(x*x)), dim=[2,3]) < 0, -torch.abs(torch.sum(torch.where(x>0, (x*x), -(x*x)), dim=[2,3])).sqrt(), torch.sum(torch.where(x>0, (x*x), -(x*x)), dim=[2,3]).sqrt())
+                norm_corrupt = torch.norm(x, p=2, dim=[2, 3]).mean(1)#.view(-1, 1)
+                # norm_corrupt = torch.norm(x, dim=[2,3], p=2)
+                # norm_corrupt = torch.where(torch.sum(torch.where(x>0, (x*x), -(x*x)), dim=[2,3]) < 0, -torch.abs(torch.sum(torch.where(x>0, (x*x), -(x*x)), dim=[2,3])).sqrt(), torch.sum(torch.where(x>0, (x*x), -(x*x)), dim=[2,3]).sqrt())
+                
                 ratio = (norm_clean/norm_corrupt).mean()
                 ratios.append(ratio)
+                
+                lambda_ratio = (last_norm/norm_clean).mean()
+                lambda_ratios.append(lambda_ratio)
+                # print(norm_clean.mean(), norm_corrupt.mean())
 
     ratios = torch.tensor(ratios).view(-1, len(clean_features))
+    lambda_ratios = torch.tensor(lambda_ratios).view(-1, len(clean_features))
+
     print(ratios.mean(dim=0), ratios.shape)
+    # print(lambda_ratios.mean(dim=0))
 
 def train():
     parser = argparse.ArgumentParser()
@@ -91,12 +111,13 @@ def train():
     print(len(valid_loader), len(test_loader))
 
     if 'resnet18' in args.net:
-        model = timm.create_model(args.net, pretrained=False, num_classes=num_classes)
-        model.conv1 = torch.nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
-        model.maxpool = torch.nn.MaxPool2d(kernel_size=1, stride=1, padding=0)
+        model = utils.ResNet18(num_classes=num_classes)
         model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
     elif 'wrn28' in args.net:
         model = utils.WideResNet(28, num_classes, widen_factor=10)
+        model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
+    elif 'wrn40' in args.net:
+        model = utils.WideResNet(40, num_classes, widen_factor=2)
         model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
     elif 'vgg11' == args.net:  
         model = utils.VGG('VGG11', num_classes)

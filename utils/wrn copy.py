@@ -91,27 +91,6 @@ class WideResNet(nn.Module):
             self.norm_layer = norm_layer
             self.forward = self.forward_norm
 
-    def set_gamma(self, train_loader, device, norm_layer):
-        lambda_ratios=[]
-        with torch.no_grad():
-            for batch_idx, (inputs, targets) in enumerate(train_loader):
-                inputs, targets = inputs.to(device), targets.to(device)
-
-                out, features = self.forward_features_norm(inputs)
-                out = F.avg_pool2d(out, 4)
-                out = out.view(out.size(0), -1)
-                last_norm = torch.norm(out, p=2, dim=1)
-
-                for i in range(len(features)):
-                    x = features[i]
-                    norm_clean = torch.norm(x, p=2, dim=[2, 3]).mean(1)
-                    
-                    lambda_ratio = (last_norm/norm_clean).mean()
-                    lambda_ratios.append(lambda_ratio)
-
-        lambda_ratios = torch.tensor(lambda_ratios).view(-1, len(features))
-        self.gamma = lambda_ratios.mean(0)[norm_layer]
-        print(self.gamma)
 
 
     def forward(self, x):
@@ -130,7 +109,7 @@ class WideResNet(nn.Module):
         # x = features[self.norm_layer]
         # norm = torch.where(torch.sum(torch.where(x>0, (x*x), -(x*x)), dim=[2,3]) < 0, -torch.abs(torch.sum(torch.where(x>0, (x*x), -(x*x)), dim=[2,3])).sqrt(), torch.sum(torch.where(x>0, (x*x), -(x*x)), dim=[2,3]).sqrt())
         # out = out/torch.norm(out, p=2, dim=1, keepdim=True) * norm
-        out = out/torch.norm(out, p=2, dim=1, keepdim=True) * torch.norm(F.relu(features[self.norm_layer]), p=2, dim=[2, 3]).mean(1, keepdim=True) * self.gamma# .mean(dim=1, keepdim=True)
+        out = out/torch.norm(out, p=2, dim=1, keepdim=True) * torch.norm(F.relu(features[self.norm_layer]), p=2, dim=[1, 2, 3]).view(-1, 1)# .mean(dim=1, keepdim=True)
 
         out = self.fc(out)
         return out
@@ -149,19 +128,75 @@ class WideResNet(nn.Module):
         features.append(out)
 
         for i in range(self.n):
+            out_ = out
             block = self.block1.layer[i]
-            out = block(out)
+            if not block.equalInOut:
+                out_ = block.relu1(block.bn1(out_))
+            else:
+                out = block.relu1(block.bn1(out_))
+            if block.equalInOut:
+                out = block.conv1(out)
+                features.append(out)
+                out = block.relu2(block.bn2(out))
+            else:
+                out = block.conv1(out_)
+                features.append(out)
+                out = block.relu2(block.bn2(out))
+            if block.droprate > 0:
+                out = F.dropout(out, p=block.droprate, training=block.training)
+            out = block.conv2(out)
             features.append(out)
+            if not block.equalInOut:
+                out =  torch.add(block.convShortcut(out_), out)
+            else:
+                out =  torch.add(out_, out)
 
         for i in range(self.n):
+            out_ = out
             block = self.block2.layer[i]
-            out = block(out)
+            if not block.equalInOut:
+                out_ = block.relu1(block.bn1(out_))
+            else:
+                out = block.relu1(block.bn1(out_))
+            if block.equalInOut:
+                out = block.conv1(out)
+                features.append(out)
+                out = block.relu2(block.bn2(out))
+            else:
+                out = block.conv1(out_)
+                features.append(out)
+                out = block.relu2(block.bn2(out))
+            if block.droprate > 0:
+                out = F.dropout(out, p=block.droprate, training=block.training)
+            out = block.conv2(out)
             features.append(out)
+            if not block.equalInOut:
+                out =  torch.add(block.convShortcut(out_), out)
+            else:
+                out =  torch.add(out_, out)
 
         for i in range(self.n):
+            out_ = out
             block = self.block3.layer[i]
-            out = block(out)
-            features.append(out)    
-
+            if not block.equalInOut:
+                out_ = block.relu1(block.bn1(out_))
+            else:
+                out = block.relu1(block.bn1(out_))
+            if block.equalInOut:
+                out = block.conv1(out)
+                features.append(out)
+                out = block.relu2(block.bn2(out))
+            else:
+                out = block.conv1(out_)
+                features.append(out)
+                out = block.relu2(block.bn2(out))
+            if block.droprate > 0:
+                out = F.dropout(out, p=block.droprate, training=block.training)
+            out = block.conv2(out)
+            features.append(out)
+            if not block.equalInOut:
+                out =  torch.add(block.convShortcut(out_), out)
+            else:
+                out =  torch.add(out_, out)
         out = self.relu(self.bn1(out))
         return out, features

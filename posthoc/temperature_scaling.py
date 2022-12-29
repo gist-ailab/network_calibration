@@ -34,7 +34,7 @@ class TemperatureEvaluater(nn.Module):
         """
         # Expand temperature to match the size of logits
         temperature = self.temperature.unsqueeze(1).expand(logits.size(0), logits.size(1))
-        return logits * temperature
+        return logits / temperature
 
     # This function probably should live outside of this class, but whatever
     def set_temperature(self, valid_loader):

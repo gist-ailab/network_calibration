@@ -70,11 +70,22 @@ def train():
         train_loader, valid_loader = utils.get_imagenet(args.inlier_data, dataset_path, batch_size)
 
     if 'resnet18' in args.net:
-        model = timm.create_model(args.net, pretrained=False, num_classes=num_classes)
-        model.conv1 = torch.nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
-        model.maxpool = torch.nn.MaxPool2d(kernel_size=1, stride=1, padding=0)
+        # model = timm.create_model(args.net, pretrained=False, num_classes=num_classes)
+        # model.conv1 = torch.nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
+        # model.maxpool = torch.nn.MaxPool2d(kernel_size=1, stride=1, padding=0)
+        model = utils.ResNet18(num_classes=num_classes)
         optimizer = torch.optim.SGD(model.parameters(), lr = 0.1, momentum=0.9, weight_decay = wd)
-
+    elif 'wrn28' in args.net:
+        model = utils.WideResNet(28, num_classes, widen_factor=10)
+        optimizer = torch.optim.SGD(model.parameters(), lr = 0.1, momentum=0.9, weight_decay = wd)
+    elif 'wrn40' in args.net:
+        model = utils.WideResNet(40, num_classes, widen_factor=2)
+        optimizer = torch.optim.SGD(model.parameters(), lr = 0.1, momentum=0.9, weight_decay = wd)
+    elif 'vgg11' == args.net:       
+        model = utils.VGG('VGG11', num_classes)
+        optimizer = torch.optim.SGD(model.parameters(), lr = 0.1, momentum=0.9, weight_decay = wd)
+        max_epoch = 200
+        lrde = [100, 150, 180]
     else:
         model = timm.create_model(args.net, pretrained=True, num_classes=num_classes)
         optimizer = torch.optim.SGD(model.parameters(), lr = 0.1, momentum=0.9, weight_decay = wd)
