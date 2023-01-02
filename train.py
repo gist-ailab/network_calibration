@@ -86,6 +86,13 @@ def train():
         optimizer = torch.optim.SGD(model.parameters(), lr = 0.1, momentum=0.9, weight_decay = wd)
         max_epoch = 200
         lrde = [100, 150, 180]
+    elif 'resnet34' in args.net:
+        model = utils.ResNet34(num_classes=num_classes)
+        optimizer = torch.optim.SGD(model.parameters(), lr = 0.1, momentum=0.9, weight_decay = wd)
+
+    elif 'resnet50' in args.net:
+        model = utils.ResNet50(num_classes=num_classes)
+        optimizer = torch.optim.SGD(model.parameters(), lr = 0.1, momentum=0.9, weight_decay = wd)
     else:
         model = timm.create_model(args.net, pretrained=True, num_classes=num_classes)
         optimizer = torch.optim.SGD(model.parameters(), lr = 0.1, momentum=0.9, weight_decay = wd)

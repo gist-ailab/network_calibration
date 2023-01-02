@@ -88,6 +88,7 @@ class WideResNet(nn.Module):
                 m.bias.data.zero_()
         
         if norm_layer is not None:
+            print('norm_layer')
             self.norm_layer = norm_layer
             self.forward = self.forward_norm
 

@@ -82,10 +82,12 @@ def devide_val_test(valid_loader, divide_rate = 0.1, seed = 0):
 
 
 def get_train_svhn(folder, batch_size):
-    train_data = dset.SVHN(folder, split='train', transform=test_transform_cifar, download=True)    
-    test_data = dset.SVHN(folder, split='test', transform=test_transform_cifar, download=True)
+    transform = transforms.Compose([transforms.Resize([32,32]), transforms.ToTensor()])
+
+    train_data = dset.SVHN(folder, split='train', transform=transform, download=True)    
+    test_data = dset.SVHN(folder, split='test', transform=transform, download=True)
     
-    train_loader = torch.utils.data.DataLoader(train_data, batch_size, shuffle=False, pin_memory=True, num_workers = 4)     
+    train_loader = torch.utils.data.DataLoader(train_data, batch_size, shuffle=True, pin_memory=True, num_workers = 4)     
     valid_loader = torch.utils.data.DataLoader(test_data, batch_size, shuffle=False, pin_memory=True, num_workers = 4)    
     return train_loader, valid_loader
     
@@ -153,6 +155,60 @@ def get_tinyimagenet(path, batch_size):
     ood_data = TinyImages(path, test_transform_cifar, True)
     ood_loader = torch.utils.data.DataLoader(ood_data, batch_size=batch_size, shuffle=True, pin_memory=True)
     return ood_loader
+
+
+def get_aircraft(imagenet_path, batch_size=32, jigsaw=False, eval=False):
+    train_transforms = transforms.Compose([
+        transforms.Resize([448, 448]),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                            std= [0.229, 0.224, 0.225]) 
+    ])
+    test_transforms = transforms.Compose([
+        transforms.Resize([448, 448]),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                            std= [0.229, 0.224, 0.225]),
+    ])
+
+    train_trans = train_transforms
+    test_trans = test_transforms
+    if eval:
+        train_trans = test_transforms    
+    trainset = torchvision.datasets.FGVCAircraft(imagenet_path, split='trainval', transform= train_trans, download=True)
+    testset = torchvision.datasets.FGVCAircraft(imagenet_path, split='test', transform= test_trans, download=True)
+    
+    train_loader = torch.utils.data.DataLoader(trainset, batch_size, shuffle=True, pin_memory=True, num_workers = 8)
+    valid_loader = torch.utils.data.DataLoader(testset, batch_size, shuffle=False, pin_memory=True, num_workers = 8)
+    return train_loader, valid_loader
+
+def get_scars(imagenet_path, batch_size=32, eval=False):
+    train_transforms = transforms.Compose([
+        transforms.Resize([448, 448]),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                            std= [0.229, 0.224, 0.225]) 
+    ])
+    test_transforms = transforms.Compose([
+        transforms.Resize([448, 448]),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                            std= [0.229, 0.224, 0.225]),
+    ])
+
+    train_trans = train_transforms
+    test_trans = test_transforms
+    if eval:
+        train_trans = test_transforms
+
+    trainset = torchvision.datasets.StanfordCars(imagenet_path, split='train', transform= train_trans, download=True)
+    testset = torchvision.datasets.StanfordCars(imagenet_path, split='test', transform= test_trans, download=True)
+    
+    train_loader = torch.utils.data.DataLoader(trainset, batch_size, shuffle=True, pin_memory=True, num_workers = 8)
+    valid_loader = torch.utils.data.DataLoader(testset, batch_size, shuffle=False, pin_memory=True, num_workers = 8)
+    return train_loader, valid_loader
 
 def get_svhn(folder, batch_size):
     test_data = dset.SVHN(folder, split='test', transform=test_transform_cifar, download=True)

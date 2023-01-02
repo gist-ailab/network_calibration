@@ -74,6 +74,8 @@ class ResNet(nn.Module):
         self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2)
         self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
+
+        
         self.fc = nn.Linear(512*block.expansion, num_classes)
 
         if norm_layer is not None:
@@ -166,3 +168,9 @@ class ResNet(nn.Module):
 
 def ResNet18(num_classes, norm_layer=None):
     return ResNet(BasicBlock, [2, 2, 2, 2], num_classes = num_classes, norm_layer=norm_layer)
+
+def ResNet34(num_classes, norm_layer=None):
+    return ResNet(BasicBlock, [3, 4, 6, 3], num_classes = num_classes, norm_layer=norm_layer)
+
+def ResNet50(num_classes, norm_layer=None):
+    return ResNet(Bottleneck, [3, 4, 6, 3], num_classes = num_classes, norm_layer=norm_layer)

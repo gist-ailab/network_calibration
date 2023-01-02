@@ -21,7 +21,7 @@ def forward_norm(model, loader, device):
     lambda_ratios = []
 
     features_norm = []
-    upsampler = torch.nn.Upsample(size=[32,32])
+    upsampler = torch.nn.Upsample(size=[448,448])
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(loader):
             inputs, targets = inputs.to(device), targets.to(device)
@@ -74,9 +74,55 @@ def forward_norm(model, loader, device):
     print(ratios.mean(dim=0), ratios.shape)
     # print(lambda_ratios.mean(dim=0))
 
+def forward(self, x):
+    out = F.relu(self.bn1(self.conv1(x)))
+    out = self.layer1(out)
+    out = self.layer2(out)
+    out = self.layer3(out)
+    out = self.layer4(out)
+    out = F.avg_pool2d(out, 4)
+    out = out.view(out.size(0), -1)
+    out = self.fc(out)
+    return out
+
+def forward_features(self, x):
+    out = F.relu(self.bn1(self.conv1(x)))
+    out = self.layer1(out)
+    out = self.layer2(out)
+    out = self.layer3(out)
+    out = self.layer4(out)
+    return out
+
+def forward_features_norm(self, x):
+    features = []
+    out = self.conv1(x)
+    out = F.relu(self.bn1(out))
+    features.append(out)
+
+    for layer in self.layer1:
+        out = layer(out)
+        features.append(out)
+
+    for layer in self.layer2:
+        out = layer(out)
+        features.append(out)
+
+    for layer in self.layer3:
+        out = layer(out)
+        features.append(out)
+
+    for layer in self.layer4:
+        out = layer(out)
+        features.append(out)
+
+    return out, features
+
+timm.models.ResNet.forward_features_norm = forward_features_norm
+
+
 def train():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--net','-n', default = 'resnet18', type=str)
+    parser.add_argument('--net','-n', default = 'resnet50', type=str)
     parser.add_argument('--gpu', '-g', default = '0', type=str)
     parser.add_argument('--save_path', '-s', type=str)
     parser.add_argument('--inlier-data', '-i', type=str)
@@ -96,44 +142,22 @@ def train():
     with open('{}/{}'.format(save_path, 'args.txt'), 'w') as f:
         for a in vars(args):
             f.write('{}: {}\n'.format(a, vars(args)[a]))
-    if 'cifar' in args.inlier_data:
-        train_loader, valid_loader = utils.get_cifar(args.inlier_data, dataset_path, batch_size)
+
+    if 'aircraft' in args.inlier_data:
+        train_loader, valid_loader = utils.get_aircraft(dataset_path, batch_size)
         valid_loader, test_loader = utils.devide_val_test(valid_loader, 0.9)
-    elif 'svhn' in args.inlier_data:
-        train_loader, valid_loader = utils.get_train_svhn(dataset_path, batch_size)
+    elif 'scars' in args.inlier_data:
+        train_loader, valid_loader = utils.get_scars(dataset_path, batch_size)
         valid_loader, test_loader = utils.devide_val_test(valid_loader, 0.9)
-    elif 'ham10000' in args.inlier_data:
-        train_loader, valid_loader = utils.get_imagenet('ham10000', dataset_path, batch_size)
-        valid_loader, test_loader = utils.devide_val_test(valid_loader, 0.9)
-    else:
-        train_loader, valid_loader = utils.get_imagenet(args.inlier_data, dataset_path, batch_size)
-        valid_loader, test_loader = utils.devide_val_test(valid_loader, 0.9)
+
     print(len(valid_loader), len(test_loader))
 
-    if 'resnet18' in args.net:
-        model = utils.ResNet18(num_classes=num_classes)
+    if 'resnet50' in args.net:
+        model = timm.create_model(args.net, num_classes = num_classes)
+        # model = utils.ResNet50(num_classes=num_classes)
+        # model = utils.ResNet50(num_classes=num_classes, norm_layer = -2)
+
         model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
-    elif 'wrn28' in args.net:
-        model = utils.WideResNet(28, num_classes, widen_factor=10)
-        model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
-    elif 'wrn40' in args.net:
-        model = utils.WideResNet(40, num_classes, widen_factor=2)
-        model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
-    elif 'vgg11' == args.net:  
-        model = utils.VGG('VGG11', num_classes)
-        model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
-    elif 'resnet34' in args.net:
-        model = utils.ResNet34(num_classes=num_classes)
-        model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
-    elif 'resnet50' in args.net:
-        model = utils.ResNet50(num_classes=num_classes)
-        model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
-    else:
-        model = timm.create_model(args.net, pretrained=False, num_classes=num_classes)
-        if args.inlier_data == 'imagenet':   
-            model = torchvision.models.resnet50(pretrained=True)
-        else:
-            model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
     model.to(device)
 
     forward_norm(model, train_loader, device)

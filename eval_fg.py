@@ -52,37 +52,16 @@ def train():
         for a in vars(args):
             f.write('{}: {}\n'.format(a, vars(args)[a]))
 
-    if 'cifar' in args.inlier_data:
-        train_loader, valid_loader = utils.get_cifar(args.inlier_data, dataset_path, batch_size)
+    if 'aircraft' in args.inlier_data:
+        train_loader, valid_loader = utils.get_aircraft(dataset_path, batch_size)
         valid_loader, test_loader = utils.devide_val_test(valid_loader, 0.9)
-    elif 'svhn' in args.inlier_data:
-        train_loader, valid_loader = utils.get_train_svhn(dataset_path, batch_size)
+    elif 'scars' in args.inlier_data:
+        train_loader, valid_loader = utils.get_scars(dataset_path, batch_size)
         valid_loader, test_loader = utils.devide_val_test(valid_loader, 0.9)
 
-    elif 'ham10000' in args.inlier_data:
-        train_loader, valid_loader = utils.get_imagenet('ham10000', dataset_path, batch_size)
-        valid_loader, test_loader = utils.devide_val_test(valid_loader, 0.9)
-    else:
-        train_loader, valid_loader = utils.get_imagenet(args.inlier_data, dataset_path, batch_size)
-        valid_loader, test_loader = utils.devide_val_test(valid_loader, 0.9)
     print(len(valid_loader), len(test_loader))
 
-    if 'resnet18' in args.net:
-        model = utils.ResNet18(num_classes = num_classes, norm_layer = -2)
-        # model = utils.ResNet18(num_classes = num_classes)
-        model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
-    elif 'wrn28' in args.net:
-        model = utils.WideResNet(28, num_classes, widen_factor=10, norm_layer=-2)
-        # model = utils.WideResNet(28, num_classes, widen_factor=10)
-        model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
-    elif 'vgg11' == args.net:       
-        model = utils.VGG('VGG11', num_classes)
-        model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
-    elif 'wrn40' in args.net:
-        model = utils.WideResNet(40, num_classes, widen_factor=2, norm_layer=-2)
-        # model = utils.WideResNet(40, num_classes, widen_factor=2)
-        model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
-    elif 'resnet50' in args.net:
+    if 'resnet50' in args.net:
         model = utils.ResNet50(num_classes=num_classes)
         # model = utils.ResNet50(num_classes=num_classes, norm_layer = -2)
 
