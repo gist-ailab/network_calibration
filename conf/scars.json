@@ -1,7 +1,7 @@
 {
     "epoch" : "100",
     "id_dataset" : "/SSDe/yyg/Stanford-Cars",
-    "batch_size" : 32,
-    "save_path" : "/SSDd/yyg/Cars/",
+    "batch_size" : 16,
+    "save_path" : "/SSDe/yyg/calibration/Cars/",
     "num_classes" : 196
 }

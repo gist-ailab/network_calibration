@@ -116,7 +116,8 @@ def train():
         'svhn': 0.9500,
         'aircraft':0.76,
         'cub':0.8,
-        'scars':0.8
+        'scars':0.8,
+        'ham10000':0.7
     }
     A_tr = A_tr[args.inlier_data]
 

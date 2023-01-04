@@ -76,6 +76,7 @@ def forward_norm(model, loader, device):
 
 def forward(self, x):
     out = F.relu(self.bn1(self.conv1(x)))
+    out = self.maxpool(out)
     out = self.layer1(out)
     out = self.layer2(out)
     out = self.layer3(out)
@@ -87,25 +88,27 @@ def forward(self, x):
 
 def forward_features(self, x):
     out = F.relu(self.bn1(self.conv1(x)))
+    out = self.maxpool(out)
     out = self.layer1(out)
     out = self.layer2(out)
     out = self.layer3(out)
     out = self.layer4(out)
     return out
 
+
 def forward_features_norm(self, x):
     features = []
     out = self.conv1(x)
     out = F.relu(self.bn1(out))
-    features.append(out)
-
+    # features.append(out)
+    out = self.maxpool(out)
     for layer in self.layer1:
         out = layer(out)
-        features.append(out)
+        # features.append(out)
 
     for layer in self.layer2:
         out = layer(out)
-        features.append(out)
+        # features.append(out)
 
     for layer in self.layer3:
         out = layer(out)

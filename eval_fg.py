@@ -23,6 +23,68 @@ evaluaters = {
     'normonly': posthoc.OnlyNormEvaluater
 
 }
+def forward_features_norm(self, x):
+    features = []
+    out = self.conv1(x)
+    out = F.relu(self.bn1(out))
+    # features.append(out)
+    out = self.maxpool(out)
+    for layer in self.layer1:
+        out = layer(out)
+        # features.append(out)
+
+    for layer in self.layer2:
+        out = layer(out)
+        # features.append(out)
+
+    for layer in self.layer3:
+        out = layer(out)
+        # features.append(out)
+
+    for layer in self.layer4:
+        out = layer(out)
+        features.append(out)
+
+    return out, features
+
+def set_gamma(self, train_loader, device, norm_layer):
+    lambda_ratios=[]
+    with torch.no_grad():
+        for batch_idx, (inputs, targets) in enumerate(train_loader):
+            inputs, targets = inputs.to(device), targets.to(device)
+
+            out, features = self.forward_features_norm(inputs)
+            out = F.avg_pool2d(out, 14)
+            out = out.view(out.size(0), -1)
+            last_norm = torch.norm(out, p=2, dim=1)
+
+            for i in range(len(features)):
+                x = features[i]
+                norm_clean = torch.norm(F.relu(x), p=2, dim=[2, 3]).mean(1)
+                
+                lambda_ratio = (last_norm/norm_clean).mean()
+                lambda_ratios.append(lambda_ratio)
+
+    lambda_ratios = torch.tensor(lambda_ratios).view(-1, len(features))
+    self.gamma = lambda_ratios.mean(0)[norm_layer]
+    print(self.gamma)
+
+def forward_norm(self, x):
+    out, features = self.forward_features_norm(x)
+    out = F.avg_pool2d(out, 14)
+    out = out.view(out.size(0), -1)
+    # out = out / torch.norm(out, p=2, dim=1, keepdim=True) * torch.norm(F.relu(features[self.norm_layer]), p=2, dim=[1, 2, 3]).view(-1, 1)
+    out = out / torch.norm(out, p=2, dim=1, keepdim=True) * torch.norm(F.relu(features[self.norm_layer]), p=2, dim=[2, 3]).mean(1, keepdim=True) * self.gamma
+    out = self.fc(out)
+    return out
+
+timm.models.ResNet.forward_features_norm = forward_features_norm
+timm.models.ResNet.set_gamma = set_gamma
+# timm.models.ResNet.forward = forward_norm
+# timm.models.ResNet.norm_layer = -2
+
+
+
 
 
 def train():
@@ -59,50 +121,20 @@ def train():
         train_loader, valid_loader = utils.get_scars(dataset_path, batch_size)
         valid_loader, test_loader = utils.devide_val_test(valid_loader, 0.9)
 
-    print(len(valid_loader), len(test_loader))
+    print(len(valid_loader), len(test_loader), num_classes)
 
     if 'resnet50' in args.net:
-        model = utils.ResNet50(num_classes=num_classes)
+        model = timm.create_model(args.net, num_classes = num_classes)
+
         # model = utils.ResNet50(num_classes=num_classes, norm_layer = -2)
 
         model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
 
     elif 'resnet34' in args.net:
         # model = utils.ResNet34(num_classes=num_classes)
-        model = utils.ResNet34(num_classes=num_classes, norm_layer = -2)
+        # model = utils.ResNet34(num_classes=num_classes, norm_layer = -2)
         model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
 
-    else:
-        model = timm.create_model(args.net, pretrained=False, num_classes=num_classes)
-        if args.inlier_data == 'imagenet':
-            def forward(self, x):
-                x = self.conv1(x)
-                x = self.bn1(x)
-                x = F.relu(x)
-                x = self.maxpool(x)
-
-                x = self.layer1(x)       
-                x = self.layer2(x)
-                x = self.layer3(x)       
-
-                x = self.layer4[0](x)      
-                x = self.layer4[1](x)      
-                norm1 = torch.sum(x**2, dim=[2,3]).sqrt()
-                norm1 = norm1.mean(dim=1)
-                x = self.layer4[2](x)
-                norm2 = torch.sum(x**2, dim=[2,3]).sqrt()
-                norm2 = norm2.mean(dim=1)
-                x = x/norm2.view(-1,1,1,1) * norm1.view(-1,1,1,1)
-
-                x = self.avgpool(x)
-                x = torch.flatten(x, 1)
-
-                x = self.fc(x)
-                return x
-            # torchvision.models.ResNet._forward_impl = forward            
-            model = torchvision.models.resnet50(pretrained=True)
-        else:
-            model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
     model.to(device)
     model.eval()
     model.set_gamma(train_loader, device, -2)
@@ -115,7 +147,7 @@ def train():
         
         device = device,
         num_classes = num_classes,
-        ndim = 512
+        ndim = 2048
         )
     
     ## evaluation

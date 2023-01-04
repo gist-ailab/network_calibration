@@ -21,7 +21,7 @@ def forward_norm(model, loader, device):
     lambda_ratios = []
 
     features_norm = []
-    upsampler = torch.nn.Upsample(size=[32,32])
+    upsampler = torch.nn.Upsample(size=[224,224])
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(loader):
             inputs, targets = inputs.to(device), targets.to(device)
@@ -43,7 +43,8 @@ def forward_norm(model, loader, device):
 
             last_feat_clean, clean_features = model.forward_features_norm(inputs)
             _, corrupted_features = model.forward_features_norm(corrputed_inputs)
-            last_feat_clean = F.avg_pool2d(last_feat_clean, 4)
+            # print(last_feat_clean.shape)
+            last_feat_clean = F.avg_pool2d(last_feat_clean, 7)
             last_feat_clean = last_feat_clean.view(last_feat_clean.size(0), -1)
 
             last_norm = torch.norm(last_feat_clean, p=2, dim=1)

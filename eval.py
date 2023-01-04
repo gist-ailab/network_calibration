@@ -90,7 +90,7 @@ def train():
 
     elif 'resnet34' in args.net:
         # model = utils.ResNet34(num_classes=num_classes)
-        model = utils.ResNet34(num_classes=num_classes, norm_layer = -2)
+        model = utils.ResNet34(num_classes=num_classes, norm_layer = -1)
         model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
 
     else:
@@ -126,7 +126,7 @@ def train():
             model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
     model.to(device)
     model.eval()
-    model.set_gamma(train_loader, device, -2)
+    model.set_gamma(train_loader, device, -1)
     
     evaluater = evaluaters[args.method](
         model = model,
