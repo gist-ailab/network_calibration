@@ -39,7 +39,7 @@ def forward_features_norm(self, x):
 
     for layer in self.layer3:
         out = layer(out)
-        # features.append(out)
+        features.append(out)
 
     for layer in self.layer4:
         out = layer(out)
@@ -80,8 +80,8 @@ def forward_norm(self, x):
 
 timm.models.ResNet.forward_features_norm = forward_features_norm
 timm.models.ResNet.set_gamma = set_gamma
-# timm.models.ResNet.forward = forward_norm
-# timm.models.ResNet.norm_layer = -2
+timm.models.ResNet.forward = forward_norm
+timm.models.ResNet.norm_layer = -6
 
 
 
@@ -120,6 +120,9 @@ def train():
     elif 'scars' in args.inlier_data:
         train_loader, valid_loader = utils.get_scars(dataset_path, batch_size)
         valid_loader, test_loader = utils.devide_val_test(valid_loader, 0.9)
+    elif 'food101' in args.inlier_data:
+        train_loader, valid_loader = utils.get_food101(dataset_path, batch_size)
+        valid_loader, test_loader = utils.devide_val_test(valid_loader, 0.9)
 
     print(len(valid_loader), len(test_loader), num_classes)
 
@@ -135,6 +138,12 @@ def train():
         # model = utils.ResNet34(num_classes=num_classes, norm_layer = -2)
         model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
 
+    if 'resnet152' in args.net:
+        model = timm.create_model(args.net, num_classes = num_classes)
+
+        # model = utils.ResNet50(num_classes=num_classes, norm_layer = -2)
+
+        model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
     model.to(device)
     model.eval()
     model.set_gamma(train_loader, device, -2)

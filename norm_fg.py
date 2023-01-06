@@ -152,10 +152,20 @@ def train():
     elif 'scars' in args.inlier_data:
         train_loader, valid_loader = utils.get_scars(dataset_path, batch_size)
         valid_loader, test_loader = utils.devide_val_test(valid_loader, 0.9)
+    elif 'food101' in args.inlier_data:
+        train_loader, valid_loader = utils.get_food101(dataset_path, batch_size)
+        valid_loader, test_loader = utils.devide_val_test(valid_loader, 0.9)
 
     print(len(valid_loader), len(test_loader))
 
     if 'resnet50' in args.net:
+        model = timm.create_model(args.net, num_classes = num_classes)
+        # model = utils.ResNet50(num_classes=num_classes)
+        # model = utils.ResNet50(num_classes=num_classes, norm_layer = -2)
+
+        model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
+
+    if 'resnet152' in args.net:
         model = timm.create_model(args.net, num_classes = num_classes)
         # model = utils.ResNet50(num_classes=num_classes)
         # model = utils.ResNet50(num_classes=num_classes, norm_layer = -2)

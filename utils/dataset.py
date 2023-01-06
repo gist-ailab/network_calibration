@@ -210,6 +210,35 @@ def get_scars(imagenet_path, batch_size=32, eval=False):
     valid_loader = torch.utils.data.DataLoader(testset, batch_size, shuffle=False, pin_memory=True, num_workers = 8)
     return train_loader, valid_loader
 
+def get_food101(imagenet_path, batch_size=32, jigsaw = False, eval=False):
+    train_transforms = transforms.Compose([
+        transforms.Resize([448, 448]),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                            std= [0.229, 0.224, 0.225]) 
+    ])
+    test_transforms = transforms.Compose([
+        transforms.Resize([448, 448]),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                            std= [0.229, 0.224, 0.225]),
+    ])
+
+    train_trans = train_transforms
+    test_trans = test_transforms
+    if eval:
+        train_trans = test_transforms
+
+    trainset = torchvision.datasets.Food101(imagenet_path, split='train', transform= train_trans, download=True)
+    testset = torchvision.datasets.Food101(imagenet_path, split='test', transform= test_trans, download=True)
+    if jigsaw:
+        trainset = jigsaw_train_dataset(trainset, train_trans)
+    
+    train_loader = torch.utils.data.DataLoader(trainset, batch_size, shuffle=True, pin_memory=True, num_workers = 8)
+    valid_loader = torch.utils.data.DataLoader(testset, batch_size, shuffle=False, pin_memory=True, num_workers = 8)
+    return train_loader, valid_loader
+    
 def get_svhn(folder, batch_size):
     test_data = dset.SVHN(folder, split='test', transform=test_transform_cifar, download=True)
     valid_loader = torch.utils.data.DataLoader(test_data, batch_size, shuffle=False, pin_memory=True, num_workers = 4)    

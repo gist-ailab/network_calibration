@@ -1,0 +1,7 @@
+{
+    "epoch" : "100",
+    "id_dataset" : "/SSDe/yyg/Food101",
+    "batch_size" : 32,
+    "save_path" : "/SSDe/yyg/calibration/Food/",
+    "num_classes" : 101
+}
