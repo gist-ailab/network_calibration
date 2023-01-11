@@ -29,7 +29,7 @@ Tested on GTX2080TI with python 3.7, pytorch 1.13.0, torchvision 0.14.0, CUDA 11
 
 2. Set up a python environment
 ```
-conda create -n test_env python=3.8
+conda create -n test_env python=3.7
 conda activate test_env
 pip install torch torchvision
 pip install timm
@@ -38,15 +38,33 @@ pip install timm
 ## Train & Evaluation
 
 ### Trainining of the model
+```
+# Example of setting the configure files
+|-conf
+||-aircraft.json
+||-cifar10.json
+|-train.py
+|-...
 
+# aircraft.conf
+{
+    "epoch" : "100",                                  # Number of epochs for training
+    "id_dataset" : "/SSDe/yyg/FGVC-Aircraft",         # Datset path
+    "batch_size" : 32,                                # batch size
+    "save_path" : "/SSDe/yyg/calibration/Aircrafts/", # Save path
+    "num_classes" : 100                               # Number of classes
+}
+```
 
 ```
-python train_net.py --epoch 100
+# train the ResNet50 model for FGVC-aircrfat with cross-entropy loss on GPU #0
+python train.py --inlier-data aircraft --method ce --net resnet50 --gpu 0 --save_path baseline
 ```
 
 ### Evaluation on test dataset
 ```
-python test_net.py --vis_results
+# Evalation of ResNet50 model for FGVC-aircraft with temperature scaling method on GPU #0
+python eval_fg.py --inlier-data aircraft --method temperature --save_path baseline --gpu 0
 ```
 
 ## License
