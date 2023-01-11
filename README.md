@@ -1,17 +1,22 @@
 # Network Calibration
 This repository is for evaluating calibration of neural networks and training the neural network with various calibration method.
 
-Currently supported pre-hoc method are:
+Currently supported pre-hoc methods are:
 - Cross-entropy (baseline)
-- Focal Loss [https://proceedings.neurips.cc/paper/2020/file/aeb7b30ef1d024a76f21a1d40e30c302-Paper.pdf]{https://proceedings.neurips.cc/paper/2020/file/aeb7b30ef1d024a76f21a1d40e30c302-Paper.pdf}
-- Mixup
-- OECC
-- OE
-- Soft-Calibration
+- Focal Loss [Calibrating Deep Neural Networks using Focal Loss](https://proceedings.neurips.cc/paper/2020/file/aeb7b30ef1d024a76f21a1d40e30c302-Paper.pdf)
+- Mixup [On Mixup Training: Improved Calibration and Predictive Uncertainty for Deep Neural Networks](https://arxiv.org/abs/1905.11001)
+- OECC [Outlier Exposure with Confidence Control for Out-of-Distribution Detection](https://arxiv.org/abs/1906.03509)
+- OE [Deep Anomaly Detection with Outlier Exposure](https://arxiv.org/abs/1812.04606)
+- Soft-Calibration [Soft Calibration Objectives for Neural Networks](https://arxiv.org/abs/2108.00106)
+
+Currently supported post-hoc methods are:
+- Temperature Scaling
+- Vector Scaling
+- Matrix Scaling
+- Splines Fitting [Calibration of Neural Networks using Splines](https://arxiv.org/abs/2006.12800)
 
 ## Updates & TODO Lists
 - [ ] Automated norm correction function for various architectures.
-
 
 ## Getting Started
 
