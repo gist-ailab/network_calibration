@@ -1,24 +1,23 @@
 # Network Calibration
+This repository is for evaluating calibration of neural networks and training the neural network with various calibration method.
 
-
-- This is blank template to get started.
-- You can edit this template to suit your needs.
-- It is recommended to include an image in the readme.
-- You can find more awesome README templates from [google](https://www.google.com/search?q=awesome+readme+templates&oq=awe&aqs=chrome.0.69i59j69i57j69i61.1243j0j4&sourceid=chrome&ie=UTF-8)
-
-<img src="./figures/screenshot.png" height="600">
-
+Currently supported pre-hoc method are:
+- Cross-entropy (baseline)
+- Focal Loss [https://proceedings.neurips.cc/paper/2020/file/aeb7b30ef1d024a76f21a1d40e30c302-Paper.pdf]{https://proceedings.neurips.cc/paper/2020/file/aeb7b30ef1d024a76f21a1d40e30c302-Paper.pdf}
+- Mixup
+- OECC
+- OE
+- Soft-Calibration
 
 ## Updates & TODO Lists
-- [X] (2022.12.22) README_TEMPLATES.md is released.
-- [ ] Adding more samples.
+- [ ] Automated norm correction function for various architectures.
 
 
 ## Getting Started
 
 ### Environment Setup
 
-Tested on Titan RTX with python 3.7, pytorch 1.8.0, torchvision 0.9.0, CUDA 10.2 / 11.1 and detectron2 v0.5 / v0.6
+Tested on GTX2080TI with python 3.7, pytorch 1.8.0, torchvision 0.9.0, CUDA 11.1.
 
 1. Install dependencies
 ```
