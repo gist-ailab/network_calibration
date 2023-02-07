@@ -2,6 +2,7 @@ import torch
 from torch import nn, optim
 from torch.nn import functional as F
 from sklearn.metrics import roc_auc_score, log_loss, brier_score_loss, accuracy_score
+
 import sklearn.metrics as sk
 
 import numpy as np
@@ -181,6 +182,7 @@ def MCE(conf, pred, true, bin_size = 0.1):
             cal_errors.append(np.abs(acc-avg_conf))
         
     return max(cal_errors)
+     
 
 def evaluate(probs, y_true, verbose = False, normalize = False, bins = 15, is_spline = False):
     """
@@ -196,6 +198,9 @@ def evaluate(probs, y_true, verbose = False, normalize = False, bins = 15, is_sp
     Returns:
         (error, ece, mce, loss, brier), returns various scoring measures
     """
+    from .error import sce
+
+    sce = sce(y_true, probs)
     if is_spline:
         # print(probs[0].shape, probs[1].shape)
         preds = np.argmax(probs[0], axis=1)
@@ -233,6 +238,7 @@ def evaluate(probs, y_true, verbose = False, normalize = False, bins = 15, is_sp
         print("Accuracy:", accuracy)
         print("Error:", error)
         print("ECE:", ece)
+        print("SCE", sce)
         print("MCE:", mce)
         print("OE:", oe)
         print("Loss:", loss)

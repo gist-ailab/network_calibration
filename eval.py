@@ -27,7 +27,7 @@ evaluaters = {
 
 def train():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--net','-n', default = 'resnet18', type=str)
+    parser.add_argument('--net','-n', default = 'wrn40', type=str)
     parser.add_argument('--gpu', '-g', default = '0', type=str)
     parser.add_argument('--save_path', '-s', type=str)
 
@@ -68,18 +68,62 @@ def train():
     print(len(valid_loader), len(test_loader))
 
     if 'resnet18' in args.net:
-        model = utils.ResNet18(num_classes = num_classes, norm_layer = -2)
         # model = utils.ResNet18(num_classes = num_classes)
+        def forward_features_norm(self, x):
+            features = []
+            x = self.conv1(x)
+            x = self.bn1(x)
+            x = self.act1(x)
+            x = self.maxpool(x)
+
+            x = self.layer1(x)
+            x = self.layer2(x)
+            x = self.layer3(x)       
+            x = self.layer4[0](x)
+            # norm = torch.norm(x, p=2, dim=[2,3])
+            x_ = self.global_pool(x).view(-1, x.size(1))
+            norm = torch.norm(x_, p=2, dim=1, keepdim=True)
+            x = self.layer4[1](x)
+
+            x = self.global_pool(x).view(-1, x.size(1))
+            # print(torch.norm(x, p=2, dim=1, keepdim=True).shape, norm.mean(dim=1, keepdim=True).shape)
+            x = x / torch.norm(x, p=2, dim=1, keepdim=True) * norm
+            outputs = model.fc(x)
+            return outputs
+
+        # timm.models.ResNet.forward = forward_features_norm
+        model = timm.create_model(args.net, pretrained=False, num_classes=num_classes)
+        model.conv1 = torch.nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
+        model.maxpool = torch.nn.MaxPool2d(kernel_size=1, stride=1, padding=0)
         model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
     elif 'wrn28' in args.net:
-        model = utils.WideResNet(28, num_classes, widen_factor=10, norm_layer=-2)
+        def forward_features(self,x):
+            out = self.conv1(x)
+            # print(out.shape)
+            out = self.block1(out)
+            out = self.block2(out)
+
+            out = self.block3.layer[0](out)
+            out = self.block3.layer[1](out)
+            out = self.block3.layer[2](out)
+            norm1 = torch.norm(F.relu(out), p=2, dim=[2,3])
+            norm1 = norm1.mean(dim=1)
+            out = self.block3.layer[3](out)
+            norm2 = torch.norm(F.relu(out), p=2, dim=[2,3])
+            norm2 = norm2.mean(dim=1)
+            out = self.relu(self.bn1(out))
+
+            return out / norm2.view(-1, 1, 1, 1) * norm1.view(-1, 1, 1, 1)
+        # utils.WideResNet.forward_features = forward_features
+
+        model = utils.WideResNet(28, num_classes, widen_factor=10)
         # model = utils.WideResNet(28, num_classes, widen_factor=10)
         model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
     elif 'vgg11' == args.net:       
         model = utils.VGG('VGG11', num_classes)
         model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
     elif 'wrn40' in args.net:
-        model = utils.WideResNet(40, num_classes, widen_factor=2, norm_layer=-2)
+        model = utils.WideResNet(40, num_classes, widen_factor=2)
         # model = utils.WideResNet(40, num_classes, widen_factor=2)
         model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
     elif 'resnet50' in args.net:
@@ -126,7 +170,7 @@ def train():
             model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
     model.to(device)
     model.eval()
-    model.set_gamma(train_loader, device, -1)
+    # model.set_gamma(train_loader, device, -1)
     
     evaluater = evaluaters[args.method](
         model = model,

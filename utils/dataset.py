@@ -13,8 +13,10 @@ from skimage.filters import gaussian as gblur
 from sklearn.model_selection import train_test_split
 import torchvision
 
-mean = [x / 255 for x in [125.3, 123.0, 113.9]]
-std = [x / 255 for x in [63.0, 62.1, 66.7]]
+# mean = [x / 255 for x in [125.3, 123.0, 113.9]]
+# std = [x / 255 for x in [63.0, 62.1, 66.7]]
+mean = [0, 0, 0]
+std = [1, 1, 1]
 
 train_transform_cifar = transforms.Compose([transforms.Resize([32,32]), transforms.RandomHorizontalFlip(), transforms.RandomCrop(32, padding=4),
                                transforms.ToTensor(), transforms.Normalize(mean=mean, std=std)])
