@@ -37,10 +37,12 @@ class VGG(nn.Module):
     def forward(self, x):
         out = self.forward_features(x)
         out = self.classifier(out)
+
         return out
 
     def forward_features(self,x):
         out = self.features(x)
+
         return out.view(out.size(0), -1)
 
     def _make_layers(self, cfg):
@@ -53,7 +55,9 @@ class VGG(nn.Module):
                 layers += [nn.Conv2d(in_channels, x, kernel_size=3, padding=1 ,bias=True), #bias=False
                            nn.ReLU(inplace=True)]
                 in_channels = x
+
         layers += [nn.AvgPool2d(kernel_size=1, stride=1)]
+
         return nn.Sequential(*layers)
 
     def forward_features_norm(self, x):
@@ -70,4 +74,5 @@ def test():
     net = VGG('VGG11', 10)
     x = torch.randn(2,3,32,32)
     y = net(x)
+    
     print(y.size())
