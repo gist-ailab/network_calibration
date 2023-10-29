@@ -13,7 +13,6 @@ def accuracy_per_bin(predicted,real_tag,n_bins=15,apply_softmax=True):
 		predicted_prob=softmax(predicted,dim=1)
 	else:
 		predicted_prob=predicted
-	
 
 	accuracy,index = torch.max(predicted_prob,1)
 	selected_label=index.long()==real_tag
@@ -45,6 +44,7 @@ def accuracy_per_bin(predicted,real_tag,n_bins=15,apply_softmax=True):
 	samples_per_bin=torch.from_numpy(np.array(samples_per_bin)).cuda()
 	acc=acc[0:-1]
 	prob=prob[0:-1]
+
 	return acc,prob,samples_per_bin
 
 
@@ -80,6 +80,7 @@ def average_confidence_per_bin(predicted,n_bins=15,apply_softmax=True):
 		else:
 			conf[p] = prob_sel.sum().float()/float(len(prob_sel))
             # conf[p]=prob_sel.sum().float()/float(len(prob_sel))
+
         # samples_per_bin.append(len(prob_sel))
 		samples_per_bin.append(len(prob_sel))
 
@@ -170,6 +171,7 @@ def cost_CONF_mixup_interpolated(o,t1,t2,lam):
         COST+=aux_cost
 
     COST*= 28/float(len(bins_for_train))
+
     return COST
 
 
@@ -220,12 +222,14 @@ class MixupTrainer():
             total_loss += loss
             total += targets1.size(0)
             _, predicted = outputs.max(1)            
-            correct += predicted.eq(targets1).sum().item()            
+            correct += predicted.eq(targets1).sum().item()
+			
             print('\r', batch_idx, len(self.train_loader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                        % (total_loss/(batch_idx+1), 100.*correct/total, correct, total), end = '')    
+                  % (total_loss/(batch_idx+1), 100.*correct/total, correct, total), end = '')    
 
         self.train_accuracy = correct/total
         self.train_avg_loss = total_loss/len(self.train_loader)
+		
         print()
 
     def validation(self, epoch):
@@ -242,6 +246,7 @@ class MixupTrainer():
         valid_accuracy = correct/total
         self.scheduler.step()
         self.saver.save_checkpoint(epoch, metric = valid_accuracy)
+
         print('EPOCH {:4}, TRAIN [loss - {:.4f}, acc - {:.4f}], VALID [acc - {:.4f}]\n'.format(epoch, self.train_avg_loss, self.train_accuracy, valid_accuracy))
         print(self.scheduler.get_last_lr())
 
