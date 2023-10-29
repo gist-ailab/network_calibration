@@ -23,7 +23,9 @@ def validation_accuracy(model, loader, device):
             total += targets.size(0)
             _, predicted = outputs.max(1)  
             correct += predicted.eq(targets).sum().item()
+
     valid_accuracy = correct/total
+
     return valid_accuracy
 
 
@@ -43,18 +45,20 @@ def stable_cumsum(arr, rtol=1e-05, atol=1e-08):
     if not np.allclose(out[-1], expected, rtol=rtol, atol=atol):
         raise RuntimeError('cumsum was found to be unstable: '
                            'its last element does not correspond to sum')
+    
     return out
 
 
 def fpr_and_fdr_at_recall(y_true, y_score, recall_level=recall_level_default, pos_label=None):
     classes = np.unique(y_true)
     if (pos_label is None and
-            not (np.array_equal(classes, [0, 1]) or
-                     np.array_equal(classes, [-1, 1]) or
-                     np.array_equal(classes, [0]) or
-                     np.array_equal(classes, [-1]) or
-                     np.array_equal(classes, [1]))):
+        not (np.array_equal(classes, [0, 1]) or
+             np.array_equal(classes, [-1, 1]) or
+             np.array_equal(classes, [0]) or
+             np.array_equal(classes, [-1]) or
+             np.array_equal(classes, [1]))):
         raise ValueError("Data is not binary and pos_label is not specified")
+    
     elif pos_label is None:
         pos_label = 1.
 
