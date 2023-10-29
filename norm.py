@@ -1,9 +1,13 @@
+#
 import os
+import argparse
+
 import torch
 import torch.nn.functional as F
 import torchvision
-import argparse
+
 import timm
+
 import numpy as np
 
 import utils
@@ -74,6 +78,7 @@ def forward_norm(model, loader, device):
 
     print(ratios.mean(dim=0), ratios.shape)
     # print(lambda_ratios.mean(dim=0))
+
 
 def train():
     parser = argparse.ArgumentParser()
