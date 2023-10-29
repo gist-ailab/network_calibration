@@ -96,16 +96,21 @@ timm.models.ResNet.norm_layer = -6
 
 
 def train():
+    # = parser
     parser = argparse.ArgumentParser()
-    parser.add_argument('--net','-n', default = 'resnet18', type=str)
-    parser.add_argument('--gpu', '-g', default = '0', type=str)
+    parser.add_argument('--net','-n', 
+                        default = 'resnet18', type=str)
+    parser.add_argument('--gpu', '-g', 
+                        default = '0', type=str)
     parser.add_argument('--save_path', '-s', type=str)
 
     parser.add_argument('--inlier-data', '-i', type=str)
-    parser.add_argument('--method', '-m', type=str, choices=['baseline', 'temperature', 'vector', 'matrix', 'spline', 'norm', 'vectornorm', 'normonly'])
+    parser.add_argument('--method', '-m', type=str, 
+                        choices=['baseline', 'temperature', 'vector', 'matrix', 'spline', 'norm', 'vectornorm', 'normonly'])
 
     args = parser.parse_args()
 
+    # = device setting
     config = utils.read_conf('conf/'+args.inlier_data+'.json')
     device = 'cuda:'+args.gpu
 
@@ -136,11 +141,8 @@ def train():
 
     if 'resnet50' in args.net:
         model = timm.create_model(args.net, num_classes = num_classes)
-
         # model = utils.ResNet50(num_classes=num_classes, norm_layer = -2)
-
         model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
-
     elif 'resnet34' in args.net:
         # model = utils.ResNet34(num_classes=num_classes)
         # model = utils.ResNet34(num_classes=num_classes, norm_layer = -2)
@@ -148,10 +150,9 @@ def train():
 
     if 'resnet152' in args.net:
         model = timm.create_model(args.net, num_classes = num_classes)
-
         # model = utils.ResNet50(num_classes=num_classes, norm_layer = -2)
-
         model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
+
     model.to(device)
     model.eval()
     model.set_gamma(train_loader, device, -2)
