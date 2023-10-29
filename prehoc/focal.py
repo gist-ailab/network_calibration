@@ -14,6 +14,7 @@ def get_gamma(p=0.2):
     y = ((1-p)**(1-(1-p)/(p*np.log(p)))/(p*np.log(p)))*np.log(1-p)
     gamma_complex = (1-p)/(p*np.log(p)) + lambertw(-y + 1e-12, k=-1)/np.log(1-p)
     gamma = np.real(gamma_complex) #gamma for which p_t > p results in g(p_t,gamma)<1
+
     return gamma
 
 
@@ -41,18 +42,21 @@ class FocalLossAdaptive(nn.Module):
             if (pt_sample >= 0.5):
                 gamma_list.append(self.gamma)
                 continue
+
             # Choosing the gamma for the sample
             for key in sorted(gamma_dic.keys()):
                 if pt_sample < key:
                     gamma_list.append(gamma_dic[key])
                     break
+
         return torch.tensor(gamma_list).to(self.device)
 
     def forward(self, input, target):
-        if input.dim()>2:
+        if input.dim() > 2:
             input = input.view(input.size(0),input.size(1),-1)  # N,C,H,W => N,C,H*W
             input = input.transpose(1,2)    # N,C,H*W => N,H*W,C
             input = input.contiguous().view(-1,input.size(2))   # N,H*W,C => N*H*W,C
+
         target = target.view(-1,1)
         logpt = F.log_softmax(input, dim=1)
         logpt = logpt.gather(1,target)
@@ -60,6 +64,7 @@ class FocalLossAdaptive(nn.Module):
         pt = logpt.exp()
         gamma = self.get_gamma_list(pt)
         loss = -1 * (1-pt)**gamma * logpt
+
         if self.size_average: return loss.mean()
         else: return loss.sum()
 
@@ -98,7 +103,7 @@ class FocalTrainer():
             _, predicted = outputs.max(1)            
             correct += predicted.eq(targets).sum().item()            
             print('\r', batch_idx, len(self.train_loader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                        % (total_loss/(batch_idx+1), 100.*correct/total, correct, total), end = '')    
+                  % (total_loss/(batch_idx+1), 100.*correct/total, correct, total), end = '')    
 
         self.train_accuracy = correct/total
         self.train_avg_loss = total_loss/len(self.train_loader)
@@ -114,9 +119,11 @@ class FocalTrainer():
             outputs = self.model(inputs)
             total += targets.size(0)
             _, predicted = outputs.max(1)  
-            correct += predicted.eq(targets).sum().item()           
+            correct += predicted.eq(targets).sum().item()
+            
         valid_accuracy = correct/total
         self.scheduler.step()
         self.saver.save_checkpoint(epoch, metric = valid_accuracy)
+        
         print('EPOCH {:4}, TRAIN [loss - {:.4f}, acc - {:.4f}], VALID [acc - {:.4f}]\n'.format(epoch, self.train_avg_loss, self.train_accuracy, valid_accuracy))
         print(self.scheduler.get_last_lr())
