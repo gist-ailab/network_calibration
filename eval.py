@@ -32,16 +32,21 @@ evaluaters = {
 
 
 def train():
+    # = parser
     parser = argparse.ArgumentParser()
-    parser.add_argument('--net','-n', default = 'wrn40', type=str)
-    parser.add_argument('--gpu', '-g', default = '0', type=str)
+    parser.add_argument('--net','-n', 
+                        default = 'wrn40', type=str)
+    parser.add_argument('--gpu', '-g', 
+                        default = '0', type=str)
     parser.add_argument('--save_path', '-s', type=str)
 
     parser.add_argument('--inlier-data', '-i', type=str)
-    parser.add_argument('--method', '-m', type=str, choices=['baseline', 'temperature', 'vector', 'matrix', 'spline', 'norm', 'vectornorm', 'normonly'])
+    parser.add_argument('--method', '-m', type=str, 
+                        choices=['baseline', 'temperature', 'vector', 'matrix', 'spline', 'norm', 'vectornorm', 'normonly'])
 
     args = parser.parse_args()
 
+    # = device setting
     config = utils.read_conf('conf/'+args.inlier_data+'.json')
     device = 'cuda:'+args.gpu
 
