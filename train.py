@@ -25,9 +25,12 @@ trainers = {
 
 
 def train():
+    #
     parser = argparse.ArgumentParser()
-    parser.add_argument('--net','-n', default = 'resnet18', type=str)
-    parser.add_argument('--gpu', '-g', default = '0', type=str)
+    parser.add_argument('--net','-n', 
+                        default = 'resnet18', type=str)
+    parser.add_argument('--gpu', '-g', 
+                        default = '0', type=str)
     parser.add_argument('--save_path', '-s', type=str)
 
     parser.add_argument('--inlier-data', '-i', type=str)
@@ -36,10 +39,10 @@ def train():
 
     args = parser.parse_args()
 
-    config = utils.read_conf('conf/'+args.inlier_data+'.json')
+    config = utils.read_conf('conf/' + args.inlier_data+'.json')
 
-    os.environ['CUDA_VISIBLE_DEVICES']=args.gpu
-    device = 'cuda:0'#+args.gpu
+    os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+    device = 'cuda:0' # +args.gpu
 
     model_name = args.net
     dataset_path = config['id_dataset']
@@ -94,7 +97,6 @@ def train():
     elif 'resnet34' in args.net:
         model = utils.ResNet34(num_classes=num_classes)
         optimizer = torch.optim.SGD(model.parameters(), lr = 0.1, momentum=0.9, weight_decay = wd)
-
     elif 'resnet50' in args.net:
         model = utils.ResNet50(num_classes=num_classes)
         optimizer = torch.optim.SGD(model.parameters(), lr = 0.1, momentum=0.9, weight_decay = wd)
@@ -103,6 +105,7 @@ def train():
         optimizer = torch.optim.SGD(model.parameters(), lr = 0.1, momentum=0.9, weight_decay = wd)
         wd = 1e-04
         lrde = [30, 60, 90]
+
     model.to(device)
     
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, lrde)
@@ -115,7 +118,9 @@ def train():
 
     if args.method == 'mixup':
         out_loader, _ = utils.get_cifar(args.inlier_data, dataset_path, batch_size)
-    A_tr = { # for OECC
+
+    A_tr = { 
+        # for OECC
         'cifar10':0.9432,
         'cifar100':0.7644,
         'svhn': 0.9500,
@@ -126,7 +131,7 @@ def train():
     }
     A_tr = A_tr[args.inlier_data]
 
-
+    #
     trainer = trainers[args.method](
         model = model,
         train_loader = train_loader, 
