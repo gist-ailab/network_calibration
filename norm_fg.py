@@ -18,6 +18,7 @@ def forward_norm(model, loader, device):
     np.set_printoptions(threshold=np.inf, linewidth=np.inf)
     original_features_norm = []
     corrupted_features_norm = []
+
     model.eval()
 
     ratios = []
@@ -34,9 +35,11 @@ def forward_norm(model, loader, device):
             # obtain attention map
             attn_map = torch.ones_like(features.view(-1, features.size(1)*features.size(2)))
             attn_idx = features.view(-1, features.size(1)*features.size(2)).max(dim=1).indices
+
             # need to changed later
             for i in range(len(attn_idx)):
                 attn_map[i][attn_idx[i]] = 0.0
+
             # change the size of attention map as input size
             attn_map = attn_map.view(-1, 1, features.size(1), features.size(2))
             upsampled_attn_map = upsampler(attn_map)
@@ -88,6 +91,7 @@ def forward(self, x):
     out = F.avg_pool2d(out, 4)
     out = out.view(out.size(0), -1)
     out = self.fc(out)
+
     return out
 
 
@@ -98,6 +102,7 @@ def forward_features(self, x):
     out = self.layer2(out)
     out = self.layer3(out)
     out = self.layer4(out)
+
     return out
 
 
@@ -107,6 +112,7 @@ def forward_features_norm(self, x):
     out = F.relu(self.bn1(out))
     # features.append(out)
     out = self.maxpool(out)
+
     for layer in self.layer1:
         out = layer(out)
         # features.append(out)
@@ -131,12 +137,15 @@ timm.models.ResNet.forward_features_norm = forward_features_norm
 
 def train():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--net','-n', default = 'resnet50', type=str)
-    parser.add_argument('--gpu', '-g', default = '0', type=str)
+    parser.add_argument('--net','-n', 
+                        default = 'resnet50', type=str)
+    parser.add_argument('--gpu', '-g', 
+                        default = '0', type=str)
     parser.add_argument('--save_path', '-s', type=str)
     parser.add_argument('--inlier-data', '-i', type=str)
     args = parser.parse_args()
 
+    # 
     config = utils.read_conf('conf/'+args.inlier_data+'.json')
     device = 'cuda:'+args.gpu
 
@@ -177,6 +186,7 @@ def train():
         # model = utils.ResNet50(num_classes=num_classes, norm_layer = -2)
 
         model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
+        
     model.to(device)
 
     forward_norm(model, train_loader, device)
