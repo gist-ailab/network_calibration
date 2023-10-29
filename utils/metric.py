@@ -1,11 +1,14 @@
+#
 import torch
+import torch.nn.functional as F
+
 import numpy as np
 from sklearn.metrics import roc_auc_score
 import sklearn.metrics as sk
 
-import torch.nn.functional as F
 
 recall_level_default = 0.95
+
 
 def validation_accuracy(model, loader, device):
     total = 0
@@ -22,6 +25,8 @@ def validation_accuracy(model, loader, device):
             correct += predicted.eq(targets).sum().item()
     valid_accuracy = correct/total
     return valid_accuracy
+
+
 def stable_cumsum(arr, rtol=1e-05, atol=1e-08):
     """Use high precision for cumsum and check that final value matches sum
     Parameters
