@@ -37,10 +37,11 @@ class CETrainer():
             _, predicted = outputs.max(1)            
             correct += predicted.eq(targets).sum().item()            
             print('\r', batch_idx, len(self.train_loader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                        % (total_loss/(batch_idx+1), 100.*correct/total, correct, total), end = '')    
+                   % (total_loss/(batch_idx+1), 100.*correct/total, correct, total), end = '')    
 
         self.train_accuracy = correct/total
         self.train_avg_loss = total_loss/len(self.train_loader)
+
         print()
 
     def validation(self, epoch):
@@ -53,9 +54,11 @@ class CETrainer():
             outputs = self.model(inputs)
             total += targets.size(0)
             _, predicted = outputs.max(1)  
-            correct += predicted.eq(targets).sum().item()           
+            correct += predicted.eq(targets).sum().item()     
+
         valid_accuracy = correct/total
         self.scheduler.step()
         self.saver.save_checkpoint(epoch, metric = valid_accuracy)
+        
         print('EPOCH {:4}, TRAIN [loss - {:.4f}, acc - {:.4f}], VALID [acc - {:.4f}]\n'.format(epoch, self.train_avg_loss, self.train_accuracy, valid_accuracy))
         print(self.scheduler.get_last_lr())
