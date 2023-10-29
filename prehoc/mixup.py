@@ -1,10 +1,11 @@
+#
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.nn.functional import softmax
 
 import numpy as np
 
-from torch.nn.functional import softmax
 
 def accuracy_per_bin(predicted,real_tag,n_bins=15,apply_softmax=True):
 
@@ -88,6 +89,7 @@ def average_confidence_per_bin(predicted,n_bins=15,apply_softmax=True):
 
 	return conf,prob,samples_per_bin
 
+
 def confidence_per_bin(predicted,n_bins=10,apply_softmax=True):
 
 	if apply_softmax:
@@ -130,11 +132,13 @@ def confidence_per_bin(predicted,n_bins=10,apply_softmax=True):
 
 	return conf_values_per_bin,prob,samples_per_bin
 
+
 def calib_cost(a,c,c_per_bin,s,index):
 		if index==1:
 			return ((c-a.detach())**2)*s
 		elif index==2:
 			return (((c_per_bin-a.detach())**2).mean())*s	
+
 
 def cost_CONF_mixup_interpolated(o,t1,t2,lam):
     bins_for_train = [5, 15, 30]
@@ -167,7 +171,8 @@ def cost_CONF_mixup_interpolated(o,t1,t2,lam):
 
     COST*= 28/float(len(bins_for_train))
     return COST
-    
+
+
 class MixupTrainer():
     def __init__(self, **kwargs):
         self.train_loader = kwargs['train_loader']
@@ -239,6 +244,7 @@ class MixupTrainer():
         self.saver.save_checkpoint(epoch, metric = valid_accuracy)
         print('EPOCH {:4}, TRAIN [loss - {:.4f}, acc - {:.4f}], VALID [acc - {:.4f}]\n'.format(epoch, self.train_avg_loss, self.train_accuracy, valid_accuracy))
         print(self.scheduler.get_last_lr())
+
 # def cost_CONF_mixup_interpolated(o,t1,t2,lam):# \loss is applied over the mixup Image. 
 #     COST=None
 #     acc1=(o.argmax(dim=1)==t1).sum()#/float(t.size(0))).detach()#compute the accuracy, detach from the computation graph as we do not require this cost to modify this
