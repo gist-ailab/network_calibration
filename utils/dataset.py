@@ -1,22 +1,26 @@
-import json
-import torch.utils.data as data
-import numpy as np
-import torch
+#
 import os
+import json
 import random
 
-from PIL import Image
-from scipy import io
+import torch
+import torch.utils.data as data
+import torchvision
 from torchvision import transforms
 from torchvision import datasets as dset
+
+import numpy as np
+from PIL import Image
+from scipy import io
 from skimage.filters import gaussian as gblur
 from sklearn.model_selection import train_test_split
-import torchvision
+
 
 # mean = [x / 255 for x in [125.3, 123.0, 113.9]]
 # std = [x / 255 for x in [63.0, 62.1, 66.7]]
 mean = [0, 0, 0]
 std = [1, 1, 1]
+
 
 train_transform_cifar = transforms.Compose([transforms.Resize([32,32]), transforms.RandomHorizontalFlip(), transforms.RandomCrop(32, padding=4),
                                transforms.ToTensor(), transforms.Normalize(mean=mean, std=std)])
@@ -33,6 +37,7 @@ train_transforms = transforms.Compose([
                         std= [0.229, 0.224, 0.225]) 
 ])
 
+
 test_transforms = transforms.Compose([
     transforms.Resize((256,256)),
     transforms.CenterCrop((224,224)),
@@ -40,6 +45,8 @@ test_transforms = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406],
                         std= [0.229, 0.224, 0.225]) 
 ])
+
+
 def read_conf(json_path):
     """
     read json and return the configure as dictionary.
@@ -47,7 +54,8 @@ def read_conf(json_path):
     with open(json_path) as json_file:
         config = json.load(json_file)
     return config
-    
+
+
 def get_cifar(dataset, folder, batch_size):
     if dataset == 'cifar10':
         train_data = dset.CIFAR10(folder, train=True, transform=train_transform_cifar, download=True)
@@ -61,6 +69,7 @@ def get_cifar(dataset, folder, batch_size):
     valid_loader = torch.utils.data.DataLoader(test_data, batch_size, shuffle=False, pin_memory=True, num_workers = 4)
     
     return train_loader, valid_loader
+
 
 def devide_val_test(valid_loader, divide_rate = 0.1, seed = 0):
     np.random.seed(0)
@@ -92,7 +101,8 @@ def get_train_svhn(folder, batch_size):
     train_loader = torch.utils.data.DataLoader(train_data, batch_size, shuffle=True, pin_memory=True, num_workers = 4)     
     valid_loader = torch.utils.data.DataLoader(test_data, batch_size, shuffle=False, pin_memory=True, num_workers = 4)    
     return train_loader, valid_loader
-    
+
+ 
 def get_outlier(path, batch_size):
     class temp(torch.utils.data.Dataset):
         def __init__(self, path, transform=None):
@@ -111,6 +121,7 @@ def get_outlier(path, batch_size):
      transforms.RandomHorizontalFlip(), transforms.ToTensor()]))
     valid_loader = torch.utils.data.DataLoader(test_data, batch_size, shuffle=True, pin_memory=True, num_workers = 4)    
     return valid_loader
+
 
 def get_tinyimagenet(path, batch_size):
     class TinyImages(torch.utils.data.Dataset):
@@ -185,6 +196,7 @@ def get_aircraft(imagenet_path, batch_size=32, jigsaw=False, eval=False):
     valid_loader = torch.utils.data.DataLoader(testset, batch_size, shuffle=False, pin_memory=True, num_workers = 8)
     return train_loader, valid_loader
 
+
 def get_scars(imagenet_path, batch_size=32, eval=False):
     train_transforms = transforms.Compose([
         transforms.Resize([448, 448]),
@@ -211,6 +223,7 @@ def get_scars(imagenet_path, batch_size=32, eval=False):
     train_loader = torch.utils.data.DataLoader(trainset, batch_size, shuffle=True, pin_memory=True, num_workers = 8)
     valid_loader = torch.utils.data.DataLoader(testset, batch_size, shuffle=False, pin_memory=True, num_workers = 8)
     return train_loader, valid_loader
+
 
 def get_food101(imagenet_path, batch_size=32, jigsaw = False, eval=False):
     train_transforms = transforms.Compose([
@@ -240,21 +253,25 @@ def get_food101(imagenet_path, batch_size=32, jigsaw = False, eval=False):
     train_loader = torch.utils.data.DataLoader(trainset, batch_size, shuffle=True, pin_memory=True, num_workers = 8)
     valid_loader = torch.utils.data.DataLoader(testset, batch_size, shuffle=False, pin_memory=True, num_workers = 8)
     return train_loader, valid_loader
-    
+
+ 
 def get_svhn(folder, batch_size):
     test_data = dset.SVHN(folder, split='test', transform=test_transform_cifar, download=True)
     valid_loader = torch.utils.data.DataLoader(test_data, batch_size, shuffle=False, pin_memory=True, num_workers = 4)    
     return valid_loader
+
 
 def get_textures(path):
     ood_data = torchvision.datasets.ImageFolder(path, test_transform_cifar)
     ood_loader = torch.utils.data.DataLoader(ood_data, batch_size=100, shuffle=False, pin_memory=True)
     return ood_loader
 
+
 def get_lsun(path):
     ood_data = torchvision.datasets.ImageFolder(path, test_transform_cifar)
     ood_loader = torch.utils.data.DataLoader(ood_data, batch_size=100, shuffle=False, pin_memory=True)
     return ood_loader    
+
 
 def get_places(path):
     ood_data = torchvision.datasets.ImageFolder(path, test_transform_cifar)
@@ -262,10 +279,12 @@ def get_places(path):
     ood_loader = torch.utils.data.DataLoader(ood_data, batch_size=100, shuffle=False, pin_memory=True)
     return ood_loader 
 
+
 def get_folder(path):
     ood_data = torchvision.datasets.ImageFolder(path, test_transform_cifar)
     ood_loader = torch.utils.data.DataLoader(ood_data, batch_size=100, shuffle=False, pin_memory=True)
     return ood_loader 
+
 
 def get_blob():
     # /////////////// Blob ///////////////
@@ -280,6 +299,7 @@ def get_blob():
     ood_loader = torch.utils.data.DataLoader(ood_data, batch_size=100, shuffle=True, pin_memory=True)
     return ood_loader
 
+
 def get_gaussian():
     dummy_targets = torch.ones(10000)
     ood_data = torch.from_numpy(np.float32(np.clip(
@@ -289,6 +309,7 @@ def get_gaussian():
     ood_loader = torch.utils.data.DataLoader(ood_data, batch_size = 100, shuffle=True)
     return ood_loader
 
+
 def get_rademacher():
     dummy_targets = torch.ones(10000)
     ood_data = torch.from_numpy(np.random.binomial(
@@ -296,6 +317,7 @@ def get_rademacher():
     ood_data = torch.utils.data.TensorDataset(ood_data, dummy_targets)
     ood_loader = torch.utils.data.DataLoader(ood_data, batch_size=100, shuffle=True)
     return ood_loader
+
 
 def get_imagenet(dataset, imagenet_path, batch_size=32):
     trainset = torchvision.datasets.ImageFolder(imagenet_path+'/train', train_transforms)
@@ -331,10 +353,12 @@ def get_imagenet(dataset, imagenet_path, batch_size=32):
     valid_loader = torch.utils.data.DataLoader(testset, batch_size, shuffle=False, pin_memory=True, num_workers = 8)
     return train_loader, valid_loader
 
+
 def get_ood_folder(path, batch_size = 32):
     oodset = torchvision.datasets.ImageFolder(path, test_transforms)
     ood_loader = torch.utils.data.DataLoader(oodset, batch_size, shuffle = True, pin_memory = True, num_workers = 4)
     return ood_loader
+
 
 def other_class(n_classes, current_class):
     """
@@ -386,6 +410,7 @@ class cifar10Nosiy(torchvision.datasets.CIFAR10):
                 n_noisy = np.sum(np.array(self.targets) == i)
                 print("Noisy class %s, has %s samples." % (i, n_noisy))
             return
-        
+
+
 if __name__ == '__main__':
     pass
