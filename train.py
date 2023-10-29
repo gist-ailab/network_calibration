@@ -1,14 +1,19 @@
+#
 import os
+import argparse
+
 import torch
 import torchvision
-import argparse
 import timm
+
 import numpy as np
 
 import utils
 import prehoc
 
+
 # torch.manual_seed(0)
+
 
 trainers = {
     'ce': prehoc.CETrainer,
@@ -143,6 +148,7 @@ def train():
 
         ## validation
         trainer.validation(epoch)
+
 
 if __name__ =='__main__':
     train()
