@@ -19,6 +19,7 @@ def forward_norm(model, loader, device):
     np.set_printoptions(threshold=np.inf, linewidth=np.inf)
     original_features_norm = []
     corrupted_features_norm = []
+
     model.eval()
 
     ratios = []
@@ -81,15 +82,20 @@ def forward_norm(model, loader, device):
 
 
 def train():
+    # = parser
     parser = argparse.ArgumentParser()
-    parser.add_argument('--net','-n', default = 'resnet18', type=str)
-    parser.add_argument('--gpu', '-g', default = '0', type=str)
+    parser.add_argument('--net','-n', 
+                        default = 'resnet18', type=str)
+    parser.add_argument('--gpu', '-g', 
+                        default = '0', type=str)
     parser.add_argument('--save_path', '-s', type=str)
     parser.add_argument('--inlier-data', '-i', type=str)
+
     args = parser.parse_args()
 
-    config = utils.read_conf('conf/'+args.inlier_data+'.json')
-    device = 'cuda:'+args.gpu
+    # = device setting
+    config = utils.read_conf('conf/' + args.inlier_data+'.json')
+    device = 'cuda:' + args.gpu
 
     model_name = args.net
     dataset_path = config['id_dataset']
@@ -102,6 +108,7 @@ def train():
     with open('{}/{}'.format(save_path, 'args.txt'), 'w') as f:
         for a in vars(args):
             f.write('{}: {}\n'.format(a, vars(args)[a]))
+    
     if 'cifar' in args.inlier_data:
         train_loader, valid_loader = utils.get_cifar(args.inlier_data, dataset_path, batch_size)
         valid_loader, test_loader = utils.devide_val_test(valid_loader, 0.9)
@@ -114,6 +121,7 @@ def train():
     else:
         train_loader, valid_loader = utils.get_imagenet(args.inlier_data, dataset_path, batch_size)
         valid_loader, test_loader = utils.devide_val_test(valid_loader, 0.9)
+
     print(len(valid_loader), len(test_loader))
 
     if 'resnet18' in args.net:
@@ -140,6 +148,7 @@ def train():
             model = torchvision.models.resnet50(pretrained=True)
         else:
             model.load_state_dict((torch.load(save_path+'/last.pth.tar', map_location = device)['state_dict']))
+
     model.to(device)
 
     forward_norm(model, train_loader, device)
