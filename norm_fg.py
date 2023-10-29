@@ -1,9 +1,12 @@
+#
 import os
+import argparse
+
 import torch
 import torch.nn.functional as F
 import torchvision
-import argparse
 import timm
+
 import numpy as np
 
 import utils
@@ -74,6 +77,7 @@ def forward_norm(model, loader, device):
     print(ratios.mean(dim=0), ratios.shape)
     # print(lambda_ratios.mean(dim=0))
 
+
 def forward(self, x):
     out = F.relu(self.bn1(self.conv1(x)))
     out = self.maxpool(out)
@@ -85,6 +89,7 @@ def forward(self, x):
     out = out.view(out.size(0), -1)
     out = self.fc(out)
     return out
+
 
 def forward_features(self, x):
     out = F.relu(self.bn1(self.conv1(x)))
@@ -119,6 +124,7 @@ def forward_features_norm(self, x):
         features.append(out)
 
     return out, features
+
 
 timm.models.ResNet.forward_features_norm = forward_features_norm
 
