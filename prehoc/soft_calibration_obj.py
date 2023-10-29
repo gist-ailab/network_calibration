@@ -1,8 +1,12 @@
+#
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 EPS = 1e-6
+
+
 def get_soft_avuc_loss(probabilities, labels, soft_avuc_use_deprecated_v0,
                        soft_avuc_temp, soft_avuc_theta):
 
@@ -77,6 +81,7 @@ def get_soft_avuc_loss(probabilities, labels, soft_avuc_use_deprecated_v0,
         tf.math.maximum(nac_diff + niu_diff, tf.constant(EPS)))
 
     return avuc_loss
+
 
 class Trainer():
     def __init__(self, **kwargs):
