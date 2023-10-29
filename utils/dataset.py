@@ -53,6 +53,7 @@ def read_conf(json_path):
     """
     with open(json_path) as json_file:
         config = json.load(json_file)
+
     return config
 
 
@@ -65,6 +66,7 @@ def get_cifar(dataset, folder, batch_size):
         train_data = dset.CIFAR100(folder, train=True, transform=train_transform_cifar, download=True)
         test_data = dset.CIFAR100(folder, train=False, transform=test_transform_cifar, download=True)
         num_classes = 100
+    
     train_loader = torch.utils.data.DataLoader(train_data, batch_size, shuffle=True, pin_memory=True, num_workers = 4)
     valid_loader = torch.utils.data.DataLoader(test_data, batch_size, shuffle=False, pin_memory=True, num_workers = 4)
     
@@ -81,6 +83,7 @@ def devide_val_test(valid_loader, divide_rate = 0.1, seed = 0):
             targets.append(data[1])
     else:
         targets = dataset.targets
+
     indices = list(range(len(dataset)))
     val_indices, test_indices = train_test_split(indices, test_size=divide_rate, stratify=targets) 
 
@@ -89,6 +92,7 @@ def devide_val_test(valid_loader, divide_rate = 0.1, seed = 0):
 
     val_loader = torch.utils.data.DataLoader(val_dataset, shuffle=False, num_workers=2, batch_size=100)
     test_loader = torch.utils.data.DataLoader(test_dataset, shuffle=False, num_workers=2, batch_size=100)
+
     return val_loader, test_loader
 
 
@@ -100,6 +104,7 @@ def get_train_svhn(folder, batch_size):
     
     train_loader = torch.utils.data.DataLoader(train_data, batch_size, shuffle=True, pin_memory=True, num_workers = 4)     
     valid_loader = torch.utils.data.DataLoader(test_data, batch_size, shuffle=False, pin_memory=True, num_workers = 4)    
+
     return train_loader, valid_loader
 
  
@@ -118,8 +123,10 @@ def get_outlier(path, batch_size):
             return len(self.data)
     
     test_data = temp(path, transforms.Compose([transforms.ToTensor(), transforms.ToPILImage(), transforms.RandomCrop(32, padding=4),
-     transforms.RandomHorizontalFlip(), transforms.ToTensor()]))
-    valid_loader = torch.utils.data.DataLoader(test_data, batch_size, shuffle=True, pin_memory=True, num_workers = 4)    
+                                               transforms.RandomHorizontalFlip(), transforms.ToTensor()])
+    )
+    valid_loader = torch.utils.data.DataLoader(test_data, batch_size, shuffle=True, pin_memory=True, num_workers = 4)   
+ 
     return valid_loader
 
 
@@ -167,6 +174,7 @@ def get_tinyimagenet(path, batch_size):
 
     ood_data = TinyImages(path, test_transform_cifar, True)
     ood_loader = torch.utils.data.DataLoader(ood_data, batch_size=batch_size, shuffle=True, pin_memory=True)
+
     return ood_loader
 
 
@@ -187,13 +195,16 @@ def get_aircraft(imagenet_path, batch_size=32, jigsaw=False, eval=False):
 
     train_trans = train_transforms
     test_trans = test_transforms
+
     if eval:
         train_trans = test_transforms    
+
     trainset = torchvision.datasets.FGVCAircraft(imagenet_path, split='trainval', transform= train_trans, download=True)
     testset = torchvision.datasets.FGVCAircraft(imagenet_path, split='test', transform= test_trans, download=True)
     
     train_loader = torch.utils.data.DataLoader(trainset, batch_size, shuffle=True, pin_memory=True, num_workers = 8)
     valid_loader = torch.utils.data.DataLoader(testset, batch_size, shuffle=False, pin_memory=True, num_workers = 8)
+
     return train_loader, valid_loader
 
 
@@ -214,6 +225,7 @@ def get_scars(imagenet_path, batch_size=32, eval=False):
 
     train_trans = train_transforms
     test_trans = test_transforms
+
     if eval:
         train_trans = test_transforms
 
@@ -222,6 +234,7 @@ def get_scars(imagenet_path, batch_size=32, eval=False):
     
     train_loader = torch.utils.data.DataLoader(trainset, batch_size, shuffle=True, pin_memory=True, num_workers = 8)
     valid_loader = torch.utils.data.DataLoader(testset, batch_size, shuffle=False, pin_memory=True, num_workers = 8)
+
     return train_loader, valid_loader
 
 
@@ -247,29 +260,34 @@ def get_food101(imagenet_path, batch_size=32, jigsaw = False, eval=False):
 
     trainset = torchvision.datasets.Food101(imagenet_path, split='train', transform= train_trans, download=True)
     testset = torchvision.datasets.Food101(imagenet_path, split='test', transform= test_trans, download=True)
+
     if jigsaw:
         trainset = jigsaw_train_dataset(trainset, train_trans)
     
     train_loader = torch.utils.data.DataLoader(trainset, batch_size, shuffle=True, pin_memory=True, num_workers = 8)
     valid_loader = torch.utils.data.DataLoader(testset, batch_size, shuffle=False, pin_memory=True, num_workers = 8)
+
     return train_loader, valid_loader
 
  
 def get_svhn(folder, batch_size):
     test_data = dset.SVHN(folder, split='test', transform=test_transform_cifar, download=True)
     valid_loader = torch.utils.data.DataLoader(test_data, batch_size, shuffle=False, pin_memory=True, num_workers = 4)    
+
     return valid_loader
 
 
 def get_textures(path):
     ood_data = torchvision.datasets.ImageFolder(path, test_transform_cifar)
     ood_loader = torch.utils.data.DataLoader(ood_data, batch_size=100, shuffle=False, pin_memory=True)
+
     return ood_loader
 
 
 def get_lsun(path):
     ood_data = torchvision.datasets.ImageFolder(path, test_transform_cifar)
     ood_loader = torch.utils.data.DataLoader(ood_data, batch_size=100, shuffle=False, pin_memory=True)
+
     return ood_loader    
 
 
@@ -277,12 +295,14 @@ def get_places(path):
     ood_data = torchvision.datasets.ImageFolder(path, test_transform_cifar)
     ood_data.samples = random.sample(ood_data.samples, 10000)
     ood_loader = torch.utils.data.DataLoader(ood_data, batch_size=100, shuffle=False, pin_memory=True)
+
     return ood_loader 
 
 
 def get_folder(path):
     ood_data = torchvision.datasets.ImageFolder(path, test_transform_cifar)
     ood_loader = torch.utils.data.DataLoader(ood_data, batch_size=100, shuffle=False, pin_memory=True)
+
     return ood_loader 
 
 
@@ -297,25 +317,25 @@ def get_blob():
     ood_data = torch.from_numpy(ood_data.transpose((0, 3, 1, 2))) * 2 - 1
     ood_data = torch.utils.data.TensorDataset(ood_data, dummy_targets)
     ood_loader = torch.utils.data.DataLoader(ood_data, batch_size=100, shuffle=True, pin_memory=True)
+
     return ood_loader
 
 
 def get_gaussian():
     dummy_targets = torch.ones(10000)
-    ood_data = torch.from_numpy(np.float32(np.clip(
-        np.random.normal(size=(10000, 3, 32, 32), scale=0.5), -1, 1))
-    )
+    ood_data = torch.from_numpy(np.float32(np.clip(np.random.normal(size=(10000, 3, 32, 32), scale=0.5), -1, 1)))
     ood_data = torch.utils.data.TensorDataset(ood_data, dummy_targets)
     ood_loader = torch.utils.data.DataLoader(ood_data, batch_size = 100, shuffle=True)
+
     return ood_loader
 
 
 def get_rademacher():
     dummy_targets = torch.ones(10000)
-    ood_data = torch.from_numpy(np.random.binomial(
-        n=1, p=0.5, size=(10000, 3, 32, 32)).astype(np.float32)) * 2 - 1
+    ood_data = torch.from_numpy(np.random.binomial(n=1, p=0.5, size=(10000, 3, 32, 32)).astype(np.float32)) * 2 - 1
     ood_data = torch.utils.data.TensorDataset(ood_data, dummy_targets)
     ood_loader = torch.utils.data.DataLoader(ood_data, batch_size=100, shuffle=True)
+
     return ood_loader
 
 
@@ -351,12 +371,14 @@ def get_imagenet(dataset, imagenet_path, batch_size=32):
         
     train_loader = torch.utils.data.DataLoader(trainset, batch_size, shuffle=True, pin_memory=True, num_workers = 8)
     valid_loader = torch.utils.data.DataLoader(testset, batch_size, shuffle=False, pin_memory=True, num_workers = 8)
+
     return train_loader, valid_loader
 
 
 def get_ood_folder(path, batch_size = 32):
     oodset = torchvision.datasets.ImageFolder(path, test_transforms)
     ood_loader = torch.utils.data.DataLoader(oodset, batch_size, shuffle = True, pin_memory = True, num_workers = 4)
+
     return ood_loader
 
 
@@ -374,12 +396,14 @@ def other_class(n_classes, current_class):
     other_class_list = list(range(n_classes))
     other_class_list.remove(current_class)
     other_class = np.random.choice(other_class_list)
+
     return other_class
 
 
 class cifar10Nosiy(torchvision.datasets.CIFAR10):
     def __init__(self, root, train=True, transform=None, target_transform=None, download=False, nosiy_rate=0.0, asym=False):
         super(cifar10Nosiy, self).__init__(root, transform=transform, target_transform=target_transform)
+
         if asym:
             # automobile < - truck, bird -> airplane, cat <-> dog, deer -> horse
             source_class = [9, 2, 3, 5, 4]
@@ -391,6 +415,7 @@ class cifar10Nosiy(torchvision.datasets.CIFAR10):
                 for idx in noisy_sample_index:
                     self.targets[idx] = t
             return
+        
         elif nosiy_rate > 0:
             n_samples = len(self.targets)
             n_noisy = int(nosiy_rate * n_samples)
@@ -409,6 +434,7 @@ class cifar10Nosiy(torchvision.datasets.CIFAR10):
             for i in range(10):
                 n_noisy = np.sum(np.array(self.targets) == i)
                 print("Noisy class %s, has %s samples." % (i, n_noisy))
+                
             return
 
 
