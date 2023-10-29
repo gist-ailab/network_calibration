@@ -27,13 +27,17 @@ class BasicBlock(nn.Module):
             x = self.relu1(self.bn1(x))
         else:
             out = self.relu1(self.bn1(x))
+
         if self.equalInOut:
             out = self.relu2(self.bn2(self.conv1(out)))
         else:
             out = self.relu2(self.bn2(self.conv1(x)))
+
         if self.droprate > 0:
             out = F.dropout(out, p=self.droprate, training=self.training)
+
         out = self.conv2(out)
+
         if not self.equalInOut:
             return torch.add(self.convShortcut(x), out)
         else:
@@ -49,6 +53,7 @@ class NetworkBlock(nn.Module):
         layers = []
         for i in range(nb_layers):
             layers.append(block(i == 0 and in_planes or out_planes, out_planes, i == 0 and stride or 1, dropRate))
+
         return nn.Sequential(*layers)
 
     def forward(self, x):
@@ -58,8 +63,10 @@ class NetworkBlock(nn.Module):
 class WideResNet(nn.Module):
     def __init__(self, depth, num_classes, widen_factor=1, dropRate=0.0, norm_layer = None):
         super(WideResNet, self).__init__()
+
         nChannels = [16, 16 * widen_factor, 32 * widen_factor, 64 * widen_factor]
         assert ((depth - 4) % 6 == 0)
+
         n = (depth - 4) // 6
         block = BasicBlock
         # 1st conv before any network block
@@ -121,6 +128,7 @@ class WideResNet(nn.Module):
         out = self.forward_features(x)
         out = F.avg_pool2d(out, 8)
         out = out.view(-1, self.nChannels)
+
         return self.fc(out)
     
     def forward_norm(self, x):
@@ -136,6 +144,7 @@ class WideResNet(nn.Module):
         out = out/torch.norm(out, p=2, dim=1, keepdim=True) * torch.norm(F.relu(features[self.norm_layer]), p=2, dim=[2, 3]).mean(1, keepdim=True) * self.gamma# .mean(dim=1, keepdim=True)
 
         out = self.fc(out)
+
         return out
 
     def forward_features(self,x):
@@ -144,6 +153,7 @@ class WideResNet(nn.Module):
         out = self.block2(out)
         out = self.block3(out)
         out = self.relu(self.bn1(out))
+
         return out
 
     def forward_features_norm(self, x):
@@ -167,4 +177,5 @@ class WideResNet(nn.Module):
             features.append(out)    
 
         out = self.relu(self.bn1(out))
+        
         return out, features
