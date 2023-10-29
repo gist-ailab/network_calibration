@@ -29,6 +29,7 @@ class BasicBlock(nn.Module):
         out = self.bn2(self.conv2(out))
         out += self.shortcut(x)
         out = F.relu(out)
+
         return out
 
 
@@ -60,6 +61,7 @@ class Bottleneck(nn.Module):
         out = self.bn3(self.conv3(out))
         out += self.shortcut(x)
         out = F.relu(out)
+
         return out
 
 
@@ -87,6 +89,7 @@ class ResNet(nn.Module):
         for stride in strides:
             layers.append(block(self.in_planes, planes, stride))
             self.in_planes = planes * block.expansion
+
         return nn.Sequential(*layers)
 
     def set_gamma(self, train_loader, device, norm_layer):
@@ -120,6 +123,7 @@ class ResNet(nn.Module):
         out = F.avg_pool2d(out, 4)
         out = out.view(out.size(0), -1)
         out = self.fc(out)
+
         return out
 
     def forward_features(self, x):
@@ -128,6 +132,7 @@ class ResNet(nn.Module):
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.layer4(out)
+
         return out
 
     def forward_norm(self, x):
@@ -137,6 +142,7 @@ class ResNet(nn.Module):
         # out = out / torch.norm(out, p=2, dim=1, keepdim=True) * torch.norm(F.relu(features[self.norm_layer]), p=2, dim=[1, 2, 3]).view(-1, 1)
         out = out / torch.norm(out, p=2, dim=1, keepdim=True) * torch.norm(F.relu(features[self.norm_layer]), p=2, dim=[2, 3]).mean(1, keepdim=True) * self.gamma
         out = self.fc(out)
+        
         return out
 
     def forward_features_norm(self, x):
