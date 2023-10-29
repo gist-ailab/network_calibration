@@ -1,9 +1,11 @@
+#
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from scipy.special import lambertw
 import numpy as np
+from scipy.special import lambertw
+
 
 def get_gamma(p=0.2):
     '''
@@ -14,6 +16,7 @@ def get_gamma(p=0.2):
     gamma = np.real(gamma_complex) #gamma for which p_t > p results in g(p_t,gamma)<1
     return gamma
 
+
 ps = [0.2, 0.5]
 gammas = [5.0, 3.0]
 i = 0
@@ -21,6 +24,7 @@ gamma_dic = {}
 for p in ps:
     gamma_dic[p] = gammas[i]
     i += 1
+
 
 class FocalLossAdaptive(nn.Module):
     def __init__(self, gamma=0, size_average=False, device=None):
@@ -58,6 +62,7 @@ class FocalLossAdaptive(nn.Module):
         loss = -1 * (1-pt)**gamma * logpt
         if self.size_average: return loss.mean()
         else: return loss.sum()
+
 
 class FocalTrainer():
     def __init__(self, **kwargs):
