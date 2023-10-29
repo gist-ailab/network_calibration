@@ -1,16 +1,22 @@
+#
 import os
+import argparse
+
 import torch
 import torch.nn.functional as F
 import torchvision
-import argparse
+
 import timm
+
 import numpy as np
 
 import utils
 import prehoc
 import posthoc
 
+
 # torch.manual_seed(0)
+
 
 evaluaters = {
     'baseline': posthoc.BaselineEvaluater,
@@ -23,6 +29,8 @@ evaluaters = {
     'normonly': posthoc.OnlyNormEvaluater
 
 }
+
+
 def forward_features_norm(self, x):
     features = []
     out = self.conv1(x)
@@ -47,6 +55,7 @@ def forward_features_norm(self, x):
 
     return out, features
 
+
 def set_gamma(self, train_loader, device, norm_layer):
     lambda_ratios=[]
     with torch.no_grad():
@@ -69,6 +78,7 @@ def set_gamma(self, train_loader, device, norm_layer):
     self.gamma = lambda_ratios.mean(0)[norm_layer]
     print(self.gamma)
 
+
 def forward_norm(self, x):
     out, features = self.forward_features_norm(x)
     out = F.avg_pool2d(out, 14)
@@ -78,13 +88,11 @@ def forward_norm(self, x):
     out = self.fc(out)
     return out
 
+
 timm.models.ResNet.forward_features_norm = forward_features_norm
 timm.models.ResNet.set_gamma = set_gamma
 timm.models.ResNet.forward = forward_norm
 timm.models.ResNet.norm_layer = -6
-
-
-
 
 
 def train():
